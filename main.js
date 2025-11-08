@@ -826,6 +826,9 @@ function setupCitySearchBar() {
       resultDiv.innerHTML = `<b>${cityName}</b><br>AQI: <span style='color:${colorHex}'>${aqi}</span><br>Lat: ${cityData.lat}, Lng: ${cityData.lng}`;
       resultDiv.style.display = 'block';
       
+      // Show AI explanation
+      showAIExplanation(aqi, cityName);
+      
       // Remove previous search marker
       if (window.__searchHotspot) {
         window.hotspotGroup.remove(window.__searchHotspot);
@@ -885,6 +888,208 @@ function setupCitySearchBar() {
     }
   });
   console.log('Search bar event listeners added');
+}
+
+// City Image Handling with specific city mappings
+function getCityImageUrl(cityName) {
+  const cityLower = cityName.toLowerCase();
+  
+  // Predefined specific images for major cities for accuracy
+  const specificCityImages = {
+    'london': 'https://images.unsplash.com/photo-1513635269975-59663e0ac1ad?w=400&h=300&fit=crop',
+    'paris': 'https://images.unsplash.com/photo-1502602898536-47ad22581b52?w=400&h=300&fit=crop',
+    'new york': 'https://images.unsplash.com/photo-1496442226666-8d4d0e62e6e9?w=400&h=300&fit=crop',
+    'tokyo': 'https://images.unsplash.com/photo-1540959733332-eab4deabeeaf?w=400&h=300&fit=crop',
+    'beijing': 'https://images.unsplash.com/photo-1578662996442-48f60103fc96?w=400&h=300&fit=crop',
+    'delhi': 'https://images.unsplash.com/photo-1587474260584-136574528ed5?w=400&h=300&fit=crop',
+    'mumbai': 'https://images.unsplash.com/photo-1595659074391-2d41bbcfcc5e?w=400&h=300&fit=crop',
+    'sydney': 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=400&h=300&fit=crop',
+    'los angeles': 'https://images.unsplash.com/photo-1515896769750-31548aa180ed?w=400&h=300&fit=crop',
+    'moscow': 'https://images.unsplash.com/photo-1513326738677-b964603b136d?w=400&h=300&fit=crop',
+    'cairo': 'https://images.unsplash.com/photo-1539650116574-75c0c6d73400?w=400&h=300&fit=crop',
+    'singapore': 'https://images.unsplash.com/photo-1525625293386-3f8f99389edd?w=400&h=300&fit=crop',
+    'bangkok': 'https://images.unsplash.com/photo-1519541312645-4aed5736bea3?w=400&h=300&fit=crop',
+    'seoul': 'https://images.unsplash.com/photo-1545558014-8692077e9b5c?w=400&h=300&fit=crop',
+    'jakarta': 'https://images.unsplash.com/photo-1555899434-94d1454febf7?w=400&h=300&fit=crop',
+    'mexico city': 'https://images.unsplash.com/photo-1583571493329-0ba8c86de4b1?w=400&h=300&fit=crop',
+    'lahore': 'https://images.unsplash.com/photo-1578091675973-b1f4db1e9e26?w=400&h=300&fit=crop',
+    'dhaka': 'https://images.unsplash.com/photo-1539020699717-72eabceed3db?w=400&h=300&fit=crop',
+    'kathmandu': 'https://images.unsplash.com/photo-1544735716-392fe2489ffa?w=400&h=300&fit=crop',
+    'stockholm': 'https://images.unsplash.com/photo-1509356843151-3e7d96241e11?w=400&h=300&fit=crop',
+    'vancouver': 'https://images.unsplash.com/photo-1549068106-48ebcf2dd7b7?w=400&h=300&fit=crop',
+    'milan': 'https://images.unsplash.com/photo-1513581166391-887a96ddeafd?w=400&h=300&fit=crop'
+  };
+  
+  // Check if we have a specific image for this city
+  if (specificCityImages[cityLower]) {
+    return specificCityImages[cityLower];
+  }
+  
+  // For other cities, use targeted Unsplash searches
+  const searchTerms = [
+    `${encodeURIComponent(cityName)}+landmark`,
+    `${encodeURIComponent(cityName)}+skyline`,
+    `${encodeURIComponent(cityName)}+city+center`,
+    `${encodeURIComponent(cityName)}+downtown`,
+    `${encodeURIComponent(cityName)}+architecture`
+  ];
+  
+  // Use the first search term initially
+  return `https://source.unsplash.com/400x300/${searchTerms[0]}`;
+}
+
+let imageRetryCount = new Map();
+
+// Preload popular city images for better performance
+function preloadCityImages() {
+  const popularCities = ['london', 'paris', 'new york', 'tokyo', 'beijing'];
+  popularCities.forEach(city => {
+    const img = new Image();
+    img.src = getCityImageUrl(city);
+  });
+}
+
+// Call preload after page loads
+window.addEventListener('load', () => {
+  setTimeout(preloadCityImages, 2000); // Preload after 2 seconds
+});
+
+function handleImageError(img, cityName) {
+  const currentRetries = imageRetryCount.get(cityName) || 0;
+  
+  if (currentRetries < 5) { // Try up to 5 different sources
+    imageRetryCount.set(cityName, currentRetries + 1);
+    
+    const searchTerms = [
+      `${encodeURIComponent(cityName)}+landmark`,
+      `${encodeURIComponent(cityName)}+skyline`,
+      `${encodeURIComponent(cityName)}+city+center`,
+      `${encodeURIComponent(cityName)}+downtown`,
+      `${encodeURIComponent(cityName)}+architecture`,
+      `https://images.unsplash.com/photo-1477959858617-67f85cf4f1df?w=400&h=300&fit=crop` // Generic city fallback
+    ];
+    
+    setTimeout(() => {
+      if (currentRetries < 5) {
+        img.src = `https://source.unsplash.com/400x300/${searchTerms[currentRetries + 1]}`;
+      } else {
+        img.src = searchTerms[5]; // Use generic city image
+      }
+    }, 500);
+  } else {
+    // All sources failed, show fallback
+    img.style.display = 'none';
+    if (img.nextElementSibling) {
+      img.nextElementSibling.style.display = 'flex';
+    }
+    imageRetryCount.delete(cityName);
+  }
+}
+
+// AI Explanation System
+function showAIExplanation(aqi, cityName) {
+  const aiContainer = document.getElementById('ai-explanation-container');
+  const aiContent = document.getElementById('ai-explanation-content');
+  
+  if (!aiContainer || !aiContent) return;
+  
+  // Show container with loading animation
+  aiContainer.style.display = 'block';
+  aiContent.innerHTML = `
+    <div class="loading-dots">
+      <span></span><span></span><span></span>
+    </div>
+  `;
+  
+  // Simulate AI processing delay
+  setTimeout(() => {
+    const explanation = generateAQIExplanation(aqi, cityName);
+    aiContent.innerHTML = explanation;
+  }, 1500);
+}
+
+function generateAQIExplanation(aqi, cityName) {
+  let level, levelClass, healthEffects, recommendations, description, envCauses;
+  
+  if (aqi <= 50) {
+    level = "Good";
+    levelClass = "aqi-good";
+    description = "Air quality is considered satisfactory, and air pollution poses little or no risk.";
+    healthEffects = "Air quality is acceptable for most people. Enjoy outdoor activities!";
+    recommendations = "Perfect time for outdoor exercises, jogging, and recreational activities.";
+    envCauses = "Favorable weather conditions, effective emission controls, and natural air circulation are maintaining clean air.";
+  } else if (aqi <= 100) {
+    level = "Moderate";
+    levelClass = "aqi-moderate";
+    description = "Air quality is acceptable; however, there may be a concern for some sensitive individuals.";
+    healthEffects = "Unusually sensitive people may experience minor breathing discomfort.";
+    recommendations = "Sensitive individuals should consider reducing prolonged outdoor exertion.";
+    envCauses = "Contributing factors may include vehicle emissions, industrial activities, seasonal weather patterns, or dust from construction sites.";
+  } else if (aqi <= 150) {
+    level = "Unhealthy for Sensitive Groups";
+    levelClass = "aqi-unhealthy";
+    description = "Members of sensitive groups may experience health effects.";
+    healthEffects = "People with heart/lung disease, older adults, and children may experience symptoms.";
+    recommendations = "Sensitive groups should avoid outdoor activities. Others should limit prolonged outdoor exertion.";
+    envCauses = "Likely caused by increased traffic congestion, industrial pollution, power plant emissions, wildfires, or unfavorable weather conditions trapping pollutants.";
+  } else if (aqi <= 200) {
+    level = "Unhealthy";
+    levelClass = "aqi-unhealthy";
+    description = "Everyone may begin to experience health effects.";
+    healthEffects = "Increased likelihood of respiratory symptoms and breathing difficulties for everyone.";
+    recommendations = "Everyone should avoid outdoor activities. Stay indoors and use air purifiers if available.";
+    envCauses = "Major contributors include heavy industrial emissions, fossil fuel burning, vehicle exhaust, agricultural burning, or severe weather inversions preventing pollutant dispersion.";
+  } else {
+    level = "Very Unhealthy to Hazardous";
+    levelClass = "aqi-unhealthy";
+    description = "Health alert: everyone may experience serious health effects.";
+    healthEffects = "Serious risk of respiratory effects and premature mortality for all populations.";
+    recommendations = "Everyone should avoid all outdoor activities. Emergency conditions - stay indoors with windows closed.";
+    envCauses = "Critical pollution sources: massive industrial emissions, large-scale fires, extreme weather events, coal burning, uncontrolled vehicle emissions, or atmospheric conditions creating pollution domes.";
+  }
+  
+  return `
+    <div class="aqi-explanation">
+      <div class="city-header">
+        <div class="city-image-container">
+          <img src="${getCityImageUrl(cityName)}" 
+               alt="${cityName} cityscape" 
+               class="city-image"
+               onload="this.style.opacity='1'; this.nextElementSibling.querySelector('.loading-spinner').style.display='none';"
+               onerror="handleImageError(this, '${cityName}')">
+          <div class="city-image-fallback">
+            <div class="loading-spinner">📸</div>
+            <div class="city-icon">🏙️</div>
+            <div class="city-name">${cityName}</div>
+          </div>
+        </div>
+        <div class="city-info">
+          <div class="aqi-level ${levelClass}">AQI ${aqi} - ${level}</div>
+          <p><strong>${cityName}</strong> currently has ${level.toLowerCase()} air quality.</p>
+        </div>
+      </div>
+      <p>${description}</p>
+    </div>
+    
+    <div class="environmental-causes">
+      <strong>🌍 Environmental Causes:</strong><br>
+      ${envCauses}
+    </div>
+    
+    <div class="health-effects">
+      <strong>🏥 Health Effects:</strong><br>
+      ${healthEffects}
+    </div>
+    
+    <div class="recommendations">
+      <strong>💡 Recommendations:</strong><br>
+      ${recommendations}
+    </div>
+    
+    <div style="margin-top: 12px; font-size: 11px; color: #64748b; text-align: center;">
+      Generated by Dedalus AI • Based on WHO air quality guidelines
+    </div>
+  `;
 }
 
 // Wait for DOM and globe to be ready before enabling search

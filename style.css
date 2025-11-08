@@ -31,9 +31,9 @@ canvas {
   border-radius: 999px; 
   display: inline-block; 
 }
-.legend-color.low { background: rgb(227, 106, 106); }
-.legend-color.mid { background: rgb(165, 50, 29); }
-.legend-color.hi { background: rgb(74, 3, 3); }
+.legend-color.low { background: rgb(51, 204, 51); }
+.legend-color.mid { background: rgb(255, 153, 51); }
+.legend-color.hi { background: rgb(183, 28, 28); }
 .row { display: flex; gap: 8px; }
 button {
   background: #1e293b;
@@ -193,4 +193,49 @@ header p {
     margin-top: 8px;
     padding-top: 4px;
     border-top: 1px solid rgba(255,255,255,0.1);
+}
+
+/* Speed control enhancements */
+input[type="range"] {
+    -webkit-appearance: none;
+    appearance: none;
+    height: 6px;
+    background: rgba(255,255,255,0.2);
+    border-radius: 3px;
+    outline: none;
+}
+
+input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 16px;
+    height: 16px;
+    background: #4CAF50;
+    border-radius: 50%;
+    cursor: pointer;
+    border: 2px solid white;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+}
+
+input[type="range"]::-moz-range-thumb {
+    width: 16px;
+    height: 16px;
+    background: #4CAF50;
+    border-radius: 50%;
+    cursor: pointer;
+    border: 2px solid white;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+}
+
+input[type="range"]:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+input[type="range"]:disabled::-webkit-slider-thumb {
+    cursor: not-allowed;
+}
+
+input[type="range"]:disabled::-moz-range-thumb {
+    cursor: not-allowed;
 }

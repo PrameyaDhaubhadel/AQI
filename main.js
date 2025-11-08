@@ -174,7 +174,7 @@ function createHotspot({ lat, lng }, intensity = 0.5, color = new THREE.Color(1,
   const markerMat = new THREE.MeshBasicMaterial({
     color: color,
     transparent: true,
-    opacity: Math.min(1.0, 0.5 + 0.5 * intensity)
+    opacity: Math.min(0.7, 0.3 + 0.4 * intensity)
   });
   const marker = new THREE.Mesh(markerGeom, markerMat);
 
@@ -183,7 +183,7 @@ function createHotspot({ lat, lng }, intensity = 0.5, color = new THREE.Color(1,
   const glowMat = new THREE.MeshBasicMaterial({
     color: color,
     transparent: true,
-    opacity: Math.min(0.4, 0.2 + 0.2 * intensity),
+    opacity: Math.min(0.25, 0.1 + 0.15 * intensity),
     depthWrite: false
   });
   const glow = new THREE.Mesh(glowGeom, glowMat);
@@ -224,18 +224,18 @@ function updateHotspots(hotspots) {
     let aqiCategory;
     
     if (aqi <= 50) {
-      // Good (0-50): Medium red, small size
-      color = new THREE.Color(0.8, 0.2, 0.2);
+      // Good (0-50): Green, small size
+      color = new THREE.Color(0.2, 0.8, 0.2);
       sizeMultiplier = 0.3;
       aqiCategory = 'Good';
     } else if (aqi <= 100) {
-      // Moderate (51-100): Dark red, medium size
-      color = new THREE.Color(0.6, 0.1, 0.1);
+      // Moderate (51-100): Orange, medium size
+      color = new THREE.Color(1.0, 0.6, 0.1);
       sizeMultiplier = 0.6;
       aqiCategory = 'Moderate';
     } else {
-      // Unhealthy (100+): Very dark red, large size
-      color = new THREE.Color(0.4, 0, 0);
+      // Unhealthy (100+): Dark Red, large size
+      color = new THREE.Color(0.6, 0.05, 0.05);
       sizeMultiplier = 1.0;
       aqiCategory = 'Unhealthy';
     }
@@ -274,9 +274,9 @@ let earthRotation = 0.0;
 const SIDEREAL_SECONDS = 86164;
 const siderealAngularSpeed = 2 * Math.PI / SIDEREAL_SECONDS; // rad / s
 
-// Controls for speed (1 = real time). Users may want to speed up for demo.
-let speedMultiplier = 1.0;
-let useRealTime = true;
+// Controls for speed - Starting with 1000x speed as default
+let speedMultiplier = window.SPEED_CONFIG ? window.SPEED_CONFIG.DEFAULT_SPEED : 1000;
+let useRealTime = false; // Start in custom speed mode, not real-time
 
 // Clock for delta time
 const clock = new THREE.Clock();
@@ -330,13 +330,13 @@ function onMouseMove(event) {
       const cityData = hotspotGroup.userData.cityData;
       
       // Enhanced popup with detailed AQI information
-      let aqiColor = '#cc6666'; // Default medium red
+      let aqiColor = '#33cc33'; // Default green
       if (cityData.aqi <= 50) {
-        aqiColor = '#cc6666'; // Medium red for good
+        aqiColor = '#33cc33'; // Green for good
       } else if (cityData.aqi <= 100) {
-        aqiColor = '#991a1a'; // Dark red for moderate
+        aqiColor = '#ff9933'; // Orange for moderate
       } else {
-        aqiColor = '#660000'; // Very dark red for unhealthy
+        aqiColor = '#b71c1c'; // Dark Red for unhealthy
       }
       
       tooltip.innerHTML = `
@@ -376,59 +376,144 @@ renderer.domElement.addEventListener('mouseleave', onMouseLeave);
 // ---- Animation ----
 let isEulerDirty = false;
 function createControls() {
-  // small control panel appended to body so we can toggle real/demo speed
+  // Enhanced control panel for better speed control
   const c = document.createElement('div');
   c.style.position = 'absolute';
   c.style.right = '12px';
   c.style.bottom = '12px';
-  c.style.background = 'rgba(0,0,0,0.5)';
+  c.style.background = 'rgba(0,0,0,0.8)';
   c.style.color = 'white';
-  c.style.padding = '8px 10px';
-  c.style.borderRadius = '8px';
-  c.style.fontSize = '12px';
+  c.style.padding = '12px 15px';
+  c.style.borderRadius = '10px';
+  c.style.fontSize = '13px';
   c.style.zIndex = 20;
+  c.style.minWidth = '200px';
+  c.style.border = '1px solid rgba(255,255,255,0.2)';
 
+  // Title
+  const title = document.createElement('div');
+  title.style.fontWeight = 'bold';
+  title.style.marginBottom = '10px';
+  title.style.fontSize = '14px';
+  title.textContent = 'Earth Rotation Speed';
+  c.appendChild(title);
+
+  // Real-time checkbox
   const label = document.createElement('label');
   label.style.display = 'block';
-  label.style.marginBottom = '6px';
+  label.style.marginBottom = '8px';
+  label.style.cursor = 'pointer';
   const chk = document.createElement('input');
   chk.type = 'checkbox';
-  chk.checked = true;
+  chk.checked = false; // Start unchecked since we default to 1000x speed
   chk.id = 'realtime-check';
+  chk.style.marginRight = '6px';
   label.appendChild(chk);
-  label.appendChild(document.createTextNode(' Real-time rotation (1x)'));
+  label.appendChild(document.createTextNode(' Real-time rotation (1×)'));
   c.appendChild(label);
 
+  // Speed display and controls
+  const speedSection = document.createElement('div');
+  speedSection.style.marginTop = '10px';
+  
   const rangeLabel = document.createElement('div');
-  rangeLabel.style.marginBottom = '4px';
-  rangeLabel.textContent = 'Speed multiplier: 1.0×';
-  c.appendChild(rangeLabel);
+  rangeLabel.style.marginBottom = '6px';
+  rangeLabel.style.fontWeight = 'bold';
+  rangeLabel.style.color = '#4CAF50';
+  rangeLabel.textContent = `Speed: ${speedMultiplier.toFixed(1)}×`;
+  speedSection.appendChild(rangeLabel);
 
+  // Speed range slider
   const range = document.createElement('input');
   range.type = 'range';
-  range.min = '0.01';
-  range.max = '1000';
-  range.step = '0.01';
-  range.value = '1';
-  range.style.width = '160px';
-  range.disabled = true;
-  c.appendChild(range);
+  const config = window.SPEED_CONFIG || { MIN_SPEED: 0.1, MAX_SPEED: 10000, STEP: 0.1, DEFAULT_SPEED: 1000 };
+  range.min = config.MIN_SPEED.toString();
+  range.max = config.MAX_SPEED.toString();
+  range.step = config.STEP.toString();
+  range.value = speedMultiplier.toString();
+  range.style.width = '100%';
+  range.style.marginBottom = '8px';
+  range.disabled = false; // Start enabled since we default to custom speed
+  speedSection.appendChild(range);
 
+  // Quick speed buttons
+  const buttonContainer = document.createElement('div');
+  buttonContainer.style.display = 'flex';
+  buttonContainer.style.gap = '4px';
+  buttonContainer.style.marginTop = '6px';
+  
+  const quickSpeeds = [0.1, 1, 10, 100, 1000, 5000];
+  quickSpeeds.forEach(speed => {
+    const btn = document.createElement('button');
+    btn.textContent = `${speed}×`;
+    btn.style.flex = '1';
+    btn.style.padding = '4px 2px';
+    btn.style.fontSize = '10px';
+    btn.style.background = speed === speedMultiplier ? '#4CAF50' : 'rgba(255,255,255,0.1)';
+    btn.style.color = 'white';
+    btn.style.border = '1px solid rgba(255,255,255,0.3)';
+    btn.style.borderRadius = '4px';
+    btn.style.cursor = 'pointer';
+    btn.onclick = () => {
+      if (!useRealTime) {
+        speedMultiplier = speed;
+        range.value = speed.toString();
+        rangeLabel.textContent = `Speed: ${speedMultiplier.toFixed(1)}×`;
+        
+        // Update button styles
+        buttonContainer.querySelectorAll('button').forEach(b => {
+          b.style.background = 'rgba(255,255,255,0.1)';
+        });
+        btn.style.background = '#4CAF50';
+      }
+    };
+    buttonContainer.appendChild(btn);
+  });
+  
+  speedSection.appendChild(buttonContainer);
+  c.appendChild(speedSection);
+
+  // Event listeners
   chk.addEventListener('change', () => {
     useRealTime = chk.checked;
     if (useRealTime) {
       speedMultiplier = 1.0;
       range.disabled = true;
-      rangeLabel.textContent = `Speed multiplier: ${speedMultiplier.toFixed(2)}×`;
+      rangeLabel.textContent = 'Speed: 1.0× (Real-time)';
+      rangeLabel.style.color = '#FF9800';
+      buttonContainer.style.opacity = '0.5';
+      buttonContainer.querySelectorAll('button').forEach(b => {
+        b.disabled = true;
+        b.style.background = 'rgba(255,255,255,0.1)';
+      });
     } else {
       range.disabled = false;
-      speedMultiplier = parseFloat(range.value) || 1.0;
-      rangeLabel.textContent = `Speed multiplier: ${speedMultiplier.toFixed(2)}×`;
+      speedMultiplier = parseFloat(range.value) || config.DEFAULT_SPEED;
+      rangeLabel.textContent = `Speed: ${speedMultiplier.toFixed(1)}×`;
+      rangeLabel.style.color = '#4CAF50';
+      buttonContainer.style.opacity = '1';
+      buttonContainer.querySelectorAll('button').forEach(b => {
+        b.disabled = false;
+      });
+      // Highlight current speed button
+      buttonContainer.querySelectorAll('button').forEach(b => {
+        const btnSpeed = parseFloat(b.textContent.replace('×', ''));
+        b.style.background = btnSpeed === speedMultiplier ? '#4CAF50' : 'rgba(255,255,255,0.1)';
+      });
     }
   });
+
   range.addEventListener('input', () => {
-    speedMultiplier = parseFloat(range.value) || 1.0;
-    rangeLabel.textContent = `Speed multiplier: ${speedMultiplier.toFixed(2)}×`;
+    if (!useRealTime) {
+      speedMultiplier = parseFloat(range.value) || config.DEFAULT_SPEED;
+      rangeLabel.textContent = `Speed: ${speedMultiplier.toFixed(1)}×`;
+      
+      // Update button highlights
+      buttonContainer.querySelectorAll('button').forEach(b => {
+        const btnSpeed = parseFloat(b.textContent.replace('×', ''));
+        b.style.background = Math.abs(btnSpeed - speedMultiplier) < 0.1 ? '#4CAF50' : 'rgba(255,255,255,0.1)';
+      });
+    }
   });
 
   document.body.appendChild(c);
@@ -628,17 +713,17 @@ function setupCitySearchBar() {
         let color, sizeMultiplier, colorHex;
         
         if (aqi <= 50) {
-          color = new THREE.Color(0.8, 0.2, 0.2);
+          color = new THREE.Color(0.2, 0.8, 0.2);
           sizeMultiplier = 0.3;
-          colorHex = '#cc3333';
+          colorHex = '#33cc33';
         } else if (aqi <= 100) {
-          color = new THREE.Color(0.6, 0.1, 0.1);
+          color = new THREE.Color(1.0, 0.6, 0.1);
           sizeMultiplier = 0.6;
-          colorHex = '#991a1a';
+          colorHex = '#ff9933';
         } else {
-          color = new THREE.Color(0.4, 0, 0);
+          color = new THREE.Color(0.6, 0.05, 0.05);
           sizeMultiplier = 1.0;
-          colorHex = '#660000';
+          colorHex = '#b71c1c';
         }
         
         // Info
@@ -689,12 +774,29 @@ function setupCitySearchBar() {
   // Add a test function for known cities
   function searchKnownCity(cityName) {
     const knownCities = {
+      // Original cities
       'london': { lat: 51.5074, lng: -0.1278, aqi: 45 },
       'beijing': { lat: 39.9042, lng: 116.4074, aqi: 120 },
       'new york': { lat: 40.7128, lng: -74.0060, aqi: 75 },
       'paris': { lat: 48.8566, lng: 2.3522, aqi: 60 },
       'tokyo': { lat: 35.6762, lng: 139.6503, aqi: 50 },
-      'delhi': { lat: 28.7041, lng: 77.1025, aqi: 150 }
+      'delhi': { lat: 28.7041, lng: 77.1025, aqi: 150 },
+      'los angeles': { lat: 34.0522, lng: -118.2437, aqi: 85 },
+      'mumbai': { lat: 19.0760, lng: 72.8777, aqi: 135 },
+      'sydney': { lat: -33.8688, lng: 151.2093, aqi: 25 },
+      'cairo': { lat: 30.0444, lng: 31.2357, aqi: 165 },
+      'moscow': { lat: 55.7558, lng: 37.6176, aqi: 95 },
+      'mexico city': { lat: 19.4326, lng: -99.1332, aqi: 110 },
+      'singapore': { lat: 1.3521, lng: 103.8198, aqi: 35 },
+      'lahore': { lat: 31.5204, lng: 74.3587, aqi: 180 },
+      'stockholm': { lat: 59.3293, lng: 18.0686, aqi: 20 },
+      'bangkok': { lat: 13.7563, lng: 100.5018, aqi: 105 },
+      'dhaka': { lat: 23.8103, lng: 90.4125, aqi: 190 },
+      'vancouver': { lat: 49.2827, lng: -123.1207, aqi: 30 },
+      'milan': { lat: 45.4642, lng: 9.1900, aqi: 70 },
+      'seoul': { lat: 37.5665, lng: 126.9780, aqi: 80 },
+      'jakarta': { lat: -6.2088, lng: 106.8456, aqi: 125 },
+      'kathmandu': { lat: 27.7172, lng: 85.3240, aqi: 170 }
     };
     
     const cityData = knownCities[cityName.toLowerCase()];
@@ -705,17 +807,17 @@ function setupCitySearchBar() {
       let color, sizeMultiplier, colorHex;
       
       if (aqi <= 50) {
-        color = new THREE.Color(0.8, 0.2, 0.2);
+        color = new THREE.Color(0.2, 0.8, 0.2);
         sizeMultiplier = 0.3;
-        colorHex = '#cc3333';
+        colorHex = '#33cc33';
       } else if (aqi <= 100) {
-        color = new THREE.Color(0.6, 0.1, 0.1);
+        color = new THREE.Color(1.0, 0.6, 0.1);
         sizeMultiplier = 0.6;
-        colorHex = '#991a1a';
+        colorHex = '#ff9933';
       } else {
-        color = new THREE.Color(0.4, 0, 0);
+        color = new THREE.Color(0.6, 0.05, 0.05);
         sizeMultiplier = 1.0;
-        colorHex = '#660000';
+        colorHex = '#b71c1c';
       }
       
       resultDiv.innerHTML = `<b>${cityName}</b><br>AQI: <span style='color:${colorHex}'>${aqi}</span><br>Lat: ${cityData.lat}, Lng: ${cityData.lng}`;

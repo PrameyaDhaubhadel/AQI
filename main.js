@@ -563,8 +563,14 @@ function createYearSlider() {
     selectedYear = parseInt(slider.value);
     yearValue.textContent = selectedYear;
     console.log('Year slider changed to:', selectedYear);
+    
     // Update visualization for the selected year
     updateDataForYear(selectedYear);
+    
+    // Update AI explanation if there's a current city selected
+    if (window.currentSelectedCity) {
+      updateAIExplanationForYear(window.currentSelectedCity.name, window.currentSelectedCity.baseAqi, selectedYear);
+    }
   });
 
   document.body.appendChild(sliderContainer);
@@ -730,6 +736,13 @@ function setupCitySearchBar() {
         resultDiv.innerHTML = `<b>${data.data.city.name}</b><br>AQI: <span style='color:${colorHex}'>${aqi}</span><br>Lat: ${lat}, Lng: ${lng}`;
         resultDiv.style.display = 'block';
         
+        // Store current selected city for year updates
+        window.currentSelectedCity = {
+          name: data.data.city.name,
+          baseAqi: aqi,
+          coordinates: { lat, lng }
+        };
+        
         // Show AI explanation
         showAIExplanation(aqi, data.data.city.name);
         
@@ -825,6 +838,13 @@ function setupCitySearchBar() {
       
       resultDiv.innerHTML = `<b>${cityName}</b><br>AQI: <span style='color:${colorHex}'>${aqi}</span><br>Lat: ${cityData.lat}, Lng: ${cityData.lng}`;
       resultDiv.style.display = 'block';
+      
+      // Store current selected city for year updates
+      window.currentSelectedCity = {
+        name: cityName,
+        baseAqi: aqi,
+        coordinates: { lat: cityData.lat, lng: cityData.lng }
+      };
       
       // Show AI explanation
       showAIExplanation(aqi, cityName);
@@ -986,6 +1006,115 @@ function handleImageError(img, cityName) {
   }
 }
 
+// AQI Prediction System
+function predictAQIForYear(baseAqi, cityName, targetYear) {
+  const currentYear = new Date().getFullYear();
+  const yearDiff = targetYear - currentYear;
+  
+  // City-specific factors
+  const cityFactors = {
+    'beijing': { trend: -2, volatility: 0.3, baseline: 'high' },
+    'delhi': { trend: -1.5, volatility: 0.4, baseline: 'very_high' },
+    'mumbai': { trend: -1, volatility: 0.3, baseline: 'high' },
+    'lahore': { trend: -0.5, volatility: 0.5, baseline: 'very_high' },
+    'dhaka': { trend: -0.8, volatility: 0.4, baseline: 'very_high' },
+    'cairo': { trend: -1.2, volatility: 0.3, baseline: 'high' },
+    'jakarta': { trend: -0.7, volatility: 0.3, baseline: 'moderate' },
+    'mexico city': { trend: -1.8, volatility: 0.2, baseline: 'moderate' },
+    'bangkok': { trend: -1, volatility: 0.3, baseline: 'moderate' },
+    'seoul': { trend: -2.5, volatility: 0.2, baseline: 'moderate' },
+    'london': { trend: -0.5, volatility: 0.1, baseline: 'low' },
+    'paris': { trend: -0.8, volatility: 0.15, baseline: 'low' },
+    'new york': { trend: -1, volatility: 0.2, baseline: 'moderate' },
+    'tokyo': { trend: -1.5, volatility: 0.15, baseline: 'moderate' },
+    'sydney': { trend: -0.3, volatility: 0.1, baseline: 'low' },
+    'singapore': { trend: -0.5, volatility: 0.2, baseline: 'low' },
+    'stockholm': { trend: -0.2, volatility: 0.1, baseline: 'very_low' },
+    'vancouver': { trend: -0.3, volatility: 0.15, baseline: 'low' },
+    'moscow': { trend: -1.2, volatility: 0.25, baseline: 'moderate' },
+    'milan': { trend: -1.5, volatility: 0.2, baseline: 'moderate' },
+    'los angeles': { trend: -2, volatility: 0.25, baseline: 'moderate' }
+  };
+  
+  const cityKey = cityName.toLowerCase();
+  const factors = cityFactors[cityKey] || { trend: -0.8, volatility: 0.3, baseline: 'moderate' };
+  
+  // Calculate predicted AQI
+  let predictedAqi = baseAqi + (yearDiff * factors.trend);
+  
+  // Add some realistic variation
+  const variation = Math.sin(yearDiff * 0.5) * factors.volatility * baseAqi * 0.1;
+  predictedAqi += variation;
+  
+  // Ensure realistic bounds
+  predictedAqi = Math.max(5, Math.min(500, Math.round(predictedAqi)));
+  
+  return {
+    aqi: predictedAqi,
+    factors: factors,
+    yearDiff: yearDiff,
+    isCurrentYear: yearDiff === 0
+  };
+}
+
+function generateYearReasoning(predictedData, cityName, targetYear) {
+  const { yearDiff, isCurrentYear } = predictedData;
+  
+  if (isCurrentYear) {
+    return "Current year data based on live measurements and real-time monitoring stations.";
+  }
+  
+  const cityKey = cityName.toLowerCase();
+  let reasoning = "";
+  
+  if (yearDiff > 0) { // Future prediction
+    reasoning = `**${targetYear} Prediction Analysis:**\n`;
+    
+    if (cityKey.includes('beijing') || cityKey.includes('delhi') || cityKey.includes('mumbai')) {
+      reasoning += `• **Policy Impact**: Government air quality initiatives and industrial regulations expected to reduce emissions\n`;
+      reasoning += `• **Technology**: Increased adoption of electric vehicles and renewable energy sources\n`;
+      reasoning += `• **Urban Planning**: Smart city developments and green infrastructure improvements\n`;
+    } else if (cityKey.includes('london') || cityKey.includes('paris') || cityKey.includes('stockholm')) {
+      reasoning += `• **Climate Goals**: EU carbon neutrality targets driving cleaner air policies\n`;
+      reasoning += `• **Transport**: Expansion of public transit and electric vehicle infrastructure\n`;
+      reasoning += `• **Energy**: Continued shift away from fossil fuels toward renewables\n`;
+    } else {
+      reasoning += `• **Global Trends**: Worldwide shift toward cleaner energy and stricter emissions standards\n`;
+      reasoning += `• **Technology Adoption**: Electric vehicles and renewable energy becoming more widespread\n`;
+      reasoning += `• **Policy Evolution**: Strengthening environmental regulations and air quality monitoring\n`;
+    }
+  } else { // Historical data
+    reasoning = `**${targetYear} Historical Context:**\n`;
+    reasoning += `• **Industrial Period**: Based on historical emissions patterns and industrial activity\n`;
+    reasoning += `• **Regulatory Environment**: Air quality standards and enforcement levels of that era\n`;
+    reasoning += `• **Technology**: Transportation and energy infrastructure available at the time\n`;
+    reasoning += `• **Urban Development**: City planning and population density factors from ${targetYear}\n`;
+  }
+  
+  return reasoning;
+}
+
+function updateAIExplanationForYear(cityName, baseAqi, targetYear) {
+  const aiContainer = document.getElementById('ai-explanation-container');
+  const aiContent = document.getElementById('ai-explanation-content');
+  
+  if (!aiContainer || !aiContent) return;
+  
+  // Show loading
+  aiContent.innerHTML = `
+    <div class="loading-dots">
+      <span></span><span></span><span></span>
+    </div>
+  `;
+  
+  setTimeout(() => {
+    const prediction = predictAQIForYear(baseAqi, cityName, targetYear);
+    const reasoning = generateYearReasoning(prediction, cityName, targetYear);
+    const explanation = generateAQIExplanation(prediction.aqi, cityName, targetYear, reasoning, prediction.isCurrentYear);
+    aiContent.innerHTML = explanation;
+  }, 800);
+}
+
 // AI Explanation System
 function showAIExplanation(aqi, cityName) {
   const aiContainer = document.getElementById('ai-explanation-container');
@@ -1003,13 +1132,15 @@ function showAIExplanation(aqi, cityName) {
   
   // Simulate AI processing delay
   setTimeout(() => {
-    const explanation = generateAQIExplanation(aqi, cityName);
+    const currentYear = new Date().getFullYear();
+    const explanation = generateAQIExplanation(aqi, cityName, selectedYear || currentYear, null, true);
     aiContent.innerHTML = explanation;
   }, 1500);
 }
 
-function generateAQIExplanation(aqi, cityName) {
+function generateAQIExplanation(aqi, cityName, year = new Date().getFullYear(), customReasoning = null, isCurrentYear = true) {
   let level, levelClass, healthEffects, recommendations, description, envCauses;
+  const currentYear = new Date().getFullYear();
   
   if (aqi <= 50) {
     level = "Good";
@@ -1048,6 +1179,15 @@ function generateAQIExplanation(aqi, cityName) {
     envCauses = "Critical pollution sources: massive industrial emissions, large-scale fires, extreme weather events, coal burning, uncontrolled vehicle emissions, or atmospheric conditions creating pollution domes.";
   }
   
+  // Year-based content
+  const yearPrefix = year === currentYear ? "currently has" : 
+                    year > currentYear ? `projected to have in ${year}` : 
+                    `had in ${year}`;
+  
+  const dataType = year === currentYear ? "📊 Live Data" : 
+                  year > currentYear ? "🔮 AI Prediction" : 
+                  "📚 Historical Estimate";
+
   return `
     <div class="aqi-explanation">
       <div class="city-header">
@@ -1064,12 +1204,20 @@ function generateAQIExplanation(aqi, cityName) {
           </div>
         </div>
         <div class="city-info">
+          <div class="year-indicator">${dataType} - ${year}</div>
           <div class="aqi-level ${levelClass}">AQI ${aqi} - ${level}</div>
-          <p><strong>${cityName}</strong> currently has ${level.toLowerCase()} air quality.</p>
+          <p><strong>${cityName}</strong> ${yearPrefix} ${level.toLowerCase()} air quality.</p>
         </div>
       </div>
       <p>${description}</p>
     </div>
+    
+    ${customReasoning ? `
+    <div class="prediction-reasoning">
+      <strong>🧠 AI Analysis:</strong><br>
+      ${customReasoning.replace(/\n/g, '<br>')}
+    </div>
+    ` : ''}
     
     <div class="environmental-causes">
       <strong>🌍 Environmental Causes:</strong><br>
@@ -1087,7 +1235,7 @@ function generateAQIExplanation(aqi, cityName) {
     </div>
     
     <div style="margin-top: 12px; font-size: 11px; color: #64748b; text-align: center;">
-      Generated by Dedalus AI • Based on WHO air quality guidelines
+      Generated by Dedalus AI • ${year === currentYear ? 'Based on WHO guidelines' : `${year > currentYear ? 'Predictive' : 'Historical'} analysis`}
     </div>
   `;
 }

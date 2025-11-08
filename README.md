@@ -1,0 +1,182 @@
+# 🌍 Global Air Quality Index (AQI) Visualization
+
+An interactive 3D globe visualization showing real-time and predicted Air Quality Index (AQI) data for major cities worldwide, built with Three.js.
+
+![Globe Visualization](https://img.shields.io/badge/Three.js-Interactive-blue)
+![Status](https://img.shields.io/badge/Status-Active-green)
+![License](https://img.shields.io/badge/License-MIT-yellow)
+
+## ✨ Features
+
+### 🎯 Core Functionality
+- **Interactive 3D Earth Globe** with realistic textures and starfield background
+- **Real-time AQI Data** from World Air Quality Index API
+- **Future Predictions** with year slider (2023-2035)
+- **City Search** functionality for quick location lookup
+- **Hover Tooltips** showing detailed city information
+
+### 🎨 Visual Design
+- **3-Category Color System**: Red shades indicating AQI levels
+  - 🟢 Good (0-50): Light red, small markers
+  - 🟡 Moderate (51-100): Dark red, medium markers  
+  - 🔴 Unhealthy (100+): Very dark red, large markers
+- **Size-based Visualization**: Marker size scales with pollution severity
+- **Enhanced Tooltips**: Detailed popup information with city name, AQI value, coordinates, and category
+
+### 🔧 Technical Features
+- **Responsive Design** that works on desktop and mobile
+- **Smooth Animations** and transitions
+- **Error Handling** with fallback data systems
+- **Live API Integration** with CORS proxy support
+- **Drag-to-rotate** globe interaction
+
+## 🚀 Quick Start
+
+### Prerequisites
+- Modern web browser with WebGL support
+- Python 3.x (for local development server)
+
+### Installation
+
+1. **Clone the repository**
+   ```bash
+   git clone https://github.com/yourusername/threejs-earth-aqi.git
+   cd threejs-earth-aqi
+   ```
+
+2. **Start local server**
+   ```bash
+   python -m http.server 8000
+   ```
+
+3. **Open in browser**
+   ```
+   http://localhost:8000
+   ```
+
+## 📖 Usage Guide
+
+### 🌐 Globe Interaction
+- **Drag** to rotate the globe
+- **Hover** over red markers to see city details
+- **Scroll** to zoom in/out
+
+### 🔍 Search Functionality
+- Enter city name in the search box
+- Supported cities: London, Beijing, New York, Paris, Tokyo, Delhi, and more
+- Search results appear as temporary markers with detailed information
+
+### 📅 Time Navigation
+- Use the **year slider** to see predicted AQI data for future years
+- Range: 2023-2035
+- Watch how pollution levels change over time
+
+### 💡 Understanding the Data
+- **Marker Colors**: Darker red = higher pollution
+- **Marker Sizes**: Larger = more severe air quality
+- **Tooltip Information**: Shows AQI value, category, coordinates, and prediction details
+
+## 🛠 Technical Architecture
+
+### Core Technologies
+- **Three.js r149**: 3D graphics and WebGL rendering
+- **World Air Quality Index API**: Real-time pollution data
+- **Dedalus Lab API**: Future prediction models (when available)
+- **Vanilla JavaScript**: Core application logic
+- **CSS3**: Modern styling and responsive design
+
+### File Structure
+```
+threejs-earth-aqi/
+├── index.html          # Main HTML structure
+├── main.js             # Core Three.js application
+├── carbonModel.js      # Data fetching and API integration
+├── style.css           # Styling and responsive design
+├── three.js            # Three.js library
+├── texture/            # Earth textures and materials
+└── README.md           # Project documentation
+```
+
+### Data Sources
+- **Live AQI Data**: World Air Quality Index API
+- **City Coordinates**: Built-in database of major cities
+- **Predictions**: Mock data system with realistic trends
+- **Textures**: High-resolution Earth surface and bump maps
+
+## 🔧 Configuration
+
+### API Keys
+The project uses the following APIs:
+- **WAQI Token**: `124e54109c32be405509436460da5957750685e2`
+- **Dedalus Lab**: `dsk_live_5588588647d1_29e6a46c01644069bf9c3f3603e53757`
+
+### Customization Options
+- **Colors**: Modify AQI color schemes in `main.js`
+- **Cities**: Add more cities in `carbonModel.js`
+- **Time Range**: Adjust prediction years in slider configuration
+- **Styling**: Update visual themes in `style.css`
+
+## 🌟 Features in Detail
+
+### AQI Categories
+| Category | AQI Range | Color | Health Impact |
+|----------|-----------|-------|---------------|
+| Good | 0-50 | Light Red | Little to no risk |
+| Moderate | 51-100 | Dark Red | Acceptable for most people |
+| Unhealthy | 100+ | Very Dark Red | Health warnings |
+
+### Supported Cities
+- Beijing, China
+- New York, USA
+- London, UK
+- Paris, France
+- Tokyo, Japan
+- Delhi, India
+- Los Angeles, USA
+- Shanghai, China
+- Moscow, Russia
+- Sydney, Australia
+
+## 🐛 Troubleshooting
+
+### Common Issues
+1. **Globe not loading**: Check browser WebGL support
+2. **No data showing**: Verify internet connection for API calls
+3. **Search not working**: Try known cities first
+4. **Performance issues**: Close other browser tabs
+
+### Browser Support
+- ✅ Chrome 80+
+- ✅ Firefox 75+
+- ✅ Safari 13+
+- ✅ Edge 80+
+
+## 🤝 Contributing
+
+Contributions are welcome! Please feel free to submit issues, feature requests, or pull requests.
+
+### Development Setup
+1. Fork the repository
+2. Create your feature branch (`git checkout -b feature/AmazingFeature`)
+3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
+4. Push to the branch (`git push origin feature/AmazingFeature`)
+5. Open a Pull Request
+
+## 📜 License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+## 🙏 Acknowledgments
+
+- **Three.js Community** for the excellent 3D library
+- **World Air Quality Index** for providing free AQI data
+- **NASA** for Earth texture resources
+- **Open Source Community** for inspiration and support
+
+## 📧 Contact
+
+For questions, suggestions, or collaboration opportunities, please open an issue on GitHub.
+
+---
+
+Made with ❤️ and JavaScript

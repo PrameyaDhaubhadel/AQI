@@ -730,6 +730,9 @@ function setupCitySearchBar() {
         resultDiv.innerHTML = `<b>${data.data.city.name}</b><br>AQI: <span style='color:${colorHex}'>${aqi}</span><br>Lat: ${lat}, Lng: ${lng}`;
         resultDiv.style.display = 'block';
         
+        // Show AI explanation
+        showAIExplanation(aqi, data.data.city.name);
+        
         // Add a temporary hotspot for the searched city
         if (window.hotspotGroup) {
           // Remove previous search marker if any

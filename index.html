@@ -8,7 +8,12 @@
 </head>
 <body>
   <div id="info">
-    <h1>Global Carbon Emissions</h1>
+    <div class="title-container">
+      <div class="logo">
+        <img src="logo.png" alt="AQI Logo" class="logo-image">
+      </div>
+      <h1>Global Carbon Emissions</h1>
+    </div>
     <p>Live data visualization and predictions</p>
     <div id="legend">
       <div class="legend-item"><span class="legend-color low"></span><span>Good (0-50)</span></div>
@@ -22,6 +27,19 @@
     <input id="city-search-input" type="text" placeholder="Search city..." autocomplete="off" />
     <button id="city-search-btn">Search</button>
     <div id="search-result-info" style="display:none;"></div>
+  </div>
+
+  <!-- AI Explanation Section -->
+  <div id="ai-explanation-container" style="display:none;">
+    <div class="ai-header">
+      <div class="ai-icon">🤖</div>
+      <span class="ai-title">Dedalus AI Explains</span>
+    </div>
+    <div id="ai-explanation-content">
+      <div class="loading-dots">
+        <span></span><span></span><span></span>
+      </div>
+    </div>
   </div>
 
   <!-- Tooltip for hotspots -->

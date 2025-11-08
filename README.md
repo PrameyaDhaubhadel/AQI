@@ -40,16 +40,24 @@ An interactive 3D globe visualization showing real-time and predicted Air Qualit
 
 1. **Clone the repository**
    ```bash
-   git clone https://github.com/yourusername/threejs-earth-aqi.git
-   cd threejs-earth-aqi
+   git clone https://github.com/PrameyaDhaubhadel/AQI.git
+   cd AQI
    ```
 
-2. **Start local server**
+2. **Set up environment variables**
+   ```bash
+   cp .env.example .env
+   ```
+   Edit `.env` file and add your API keys:
+   - Get WAQI token from: https://aqicn.org/data-platform/token/
+   - Get Dedalus API key from: https://dedaluslab.ai/
+
+3. **Start local server**
    ```bash
    python -m http.server 8000
    ```
 
-3. **Open in browser**
+4. **Open in browser**
    ```
    http://localhost:8000
    ```
@@ -107,8 +115,10 @@ threejs-earth-aqi/
 
 ### API Keys
 The project uses the following APIs:
-- **WAQI Token**: `124e54109c32be405509436460da5957750685e2`
-- **Dedalus Lab**: `dsk_live_5588588647d1_29e6a46c01644069bf9c3f3603e53757`
+- **WAQI Token**: Get your free token from [World Air Quality Index](https://aqicn.org/data-platform/token/)
+- **Dedalus Lab API**: Get your API key from [Dedalus Lab](https://dedaluslab.ai/)
+
+⚠️ **Security**: API keys are stored in environment variables (`.env` file) and should never be committed to version control.
 
 ### Customization Options
 - **Colors**: Modify AQI color schemes in `main.js`
@@ -137,13 +147,35 @@ The project uses the following APIs:
 - Moscow, Russia
 - Sydney, Australia
 
-## 🐛 Troubleshooting
+## � Security
+
+### Environment Variables
+This project uses environment variables to protect sensitive API keys:
+
+- **`.env`** - Contains your actual API keys (never commit this file)
+- **`.env.example`** - Template file showing required variables
+- **`config.js`** - Handles loading and validation of environment variables
+
+### Best Practices
+- ✅ API keys are stored in `.env` file
+- ✅ `.env` is included in `.gitignore`
+- ✅ Template file (`.env.example`) is provided for setup
+- ✅ Configuration validation on application startup
+- ✅ No hardcoded secrets in source code
+
+### Setting Up Your API Keys
+1. Copy `.env.example` to `.env`
+2. Replace placeholder values with your actual API keys
+3. Never commit the `.env` file to version control
+
+## �🐛 Troubleshooting
 
 ### Common Issues
 1. **Globe not loading**: Check browser WebGL support
-2. **No data showing**: Verify internet connection for API calls
+2. **No data showing**: Verify API keys in `.env` file and internet connection
 3. **Search not working**: Try known cities first
 4. **Performance issues**: Close other browser tabs
+5. **API errors**: Check that your API keys are valid and not expired
 
 ### Browser Support
 - ✅ Chrome 80+

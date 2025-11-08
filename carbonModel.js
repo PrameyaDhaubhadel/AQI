@@ -1,16 +1,15 @@
 (function () {
-  // World Air Quality Index API configuration
-  const WAQI_API_TOKEN = '124e54109c32be405509436460da5957750685e2'; // Replace with your API token from https://aqicn.org/api/
-  const WAQI_API_BASE = 'https://api.waqi.info/feed';
+  // Configuration loaded from config.js
+  const WAQI_API_TOKEN = window.AppConfig?.WAQI_TOKEN || '';
+  const WAQI_API_BASE = window.AppConfig?.WAQI_BASE_URL || 'https://api.waqi.info/feed';
   
   let isInitialized = false;
   
   // Dedalus Lab API Configuration
-  // TODO: Update this with the correct Dedalus API endpoint when you get it
   const DEDALUS_CONFIG = {
     enabled: true, // Set to false to skip Dedalus API and use only mock data
-    apiKey: 'dsk_live_5588588647d1_29e6a46c01644069bf9c3f3603e53757',
-    baseUrl: 'https://api.dedaluslab.ai', // Update this with correct base URL
+    apiKey: window.AppConfig?.DEDALUS_API_KEY || '',
+    baseUrl: window.AppConfig?.DEDALUS_BASE_URL || 'https://api.dedaluslab.ai',
   };
   
   function normalizeAQI(aqi) {
@@ -22,7 +21,7 @@
   // Use a CORS proxy for development
   const API_URL = 'https://corsproxy.io/?https://api.carbonmonitorcities.org/v1/cities';
 
-  const WAQI_TOKEN = '124e54109c32be405509436460da5957750685e2';
+  const WAQI_TOKEN = window.AppConfig?.WAQI_TOKEN || '';
   const POPULAR_CITIES = [
     { name: 'Beijing', query: 'beijing' },
     { name: 'New York', query: 'new york' },

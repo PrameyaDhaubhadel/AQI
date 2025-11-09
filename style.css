@@ -355,6 +355,39 @@ button:hover { background: #0f172a; }
   border-radius: 0 4px 4px 0;
 }
 
+.impact-section {
+  margin: 12px 0;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  padding-top: 12px;
+}
+
+.human-impact {
+  background: rgba(59, 130, 246, 0.1);
+  border-left: 3px solid #3b82f6;
+  padding: 8px 12px;
+  margin: 6px 0;
+  border-radius: 0 4px 4px 0;
+  font-size: 12px;
+}
+
+.economic-impact {
+  background: rgba(245, 158, 11, 0.1);
+  border-left: 3px solid #f59e0b;
+  padding: 8px 12px;
+  margin: 6px 0;
+  border-radius: 0 4px 4px 0;
+  font-size: 12px;
+}
+
+.wildlife-impact {
+  background: rgba(34, 197, 94, 0.1);
+  border-left: 3px solid #22c55e;
+  padding: 8px 12px;
+  margin: 6px 0;
+  border-radius: 0 4px 4px 0;
+  font-size: 12px;
+}
+
 @keyframes slideIn {
   from {
     opacity: 0;
@@ -908,6 +941,192 @@ input[type="range"]:disabled::-moz-range-thumb {
   outline-offset: 2px;
 }
 
+/* Financial Scenario Selector Styles */
+#financial-scenario-container {
+  position: absolute;
+  top: 200px;
+  left: 16px;
+  z-index: 15;
+  max-width: 400px;
+  background: rgba(15, 23, 42, 0.95);
+  border: 1px solid rgba(34, 197, 94, 0.3);
+  border-radius: 12px;
+  padding: 16px;
+  backdrop-filter: blur(8px);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+  animation: slideIn 0.3s ease-out;
+  color: white;
+}
+
+.scenario-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 12px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid rgba(34, 197, 94, 0.2);
+}
+
+.scenario-icon {
+  font-size: 18px;
+  animation: pulse 2s infinite;
+}
+
+.scenario-title {
+  color: #22c55e;
+  font-weight: 600;
+  font-size: 14px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.scenario-description {
+  color: #e2e8f0;
+  font-size: 12px;
+  margin-bottom: 12px;
+  line-height: 1.4;
+}
+
+.scenario-buttons {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.scenario-buttons .reset-btn {
+  grid-column: 1 / -1;
+  margin-top: 4px;
+}
+
+.scenario-btn {
+  background: rgba(34, 197, 94, 0.1);
+  border: 1px solid rgba(34, 197, 94, 0.3);
+  border-radius: 8px;
+  padding: 10px 12px;
+  color: #e2e8f0;
+  font-size: 11px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+}
+
+.scenario-btn:hover {
+  background: rgba(34, 197, 94, 0.2);
+  border-color: rgba(34, 197, 94, 0.5);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(34, 197, 94, 0.2);
+}
+
+.scenario-btn.active {
+  background: rgba(34, 197, 94, 0.3);
+  border-color: #22c55e;
+  color: white;
+  font-weight: 600;
+}
+
+.scenario-btn.active::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+  animation: shimmer 2s infinite;
+}
+
+@keyframes shimmer {
+  0% { left: -100%; }
+  100% { left: 100%; }
+}
+
+.scenario-impact {
+  background: rgba(34, 197, 94, 0.1);
+  border: 1px solid rgba(34, 197, 94, 0.2);
+  border-radius: 8px;
+  padding: 10px 12px;
+  color: #e2e8f0;
+  font-size: 12px;
+  line-height: 1.4;
+}
+
+.scenario-impact strong {
+  color: #22c55e;
+}
+
+/* Recession scenario styling */
+.scenario-btn[data-scenario="recession"] {
+  background: rgba(239, 68, 68, 0.1);
+  border-color: rgba(239, 68, 68, 0.3);
+}
+
+.scenario-btn[data-scenario="recession"]:hover {
+  background: rgba(239, 68, 68, 0.2);
+  border-color: rgba(239, 68, 68, 0.5);
+  box-shadow: 0 4px 12px rgba(239, 68, 68, 0.2);
+}
+
+.scenario-btn[data-scenario="recession"].active {
+  background: rgba(239, 68, 68, 0.3);
+  border-color: #ef4444;
+}
+
+/* Boom scenario styling */
+.scenario-btn[data-scenario="boom"] {
+  background: rgba(245, 158, 11, 0.1);
+  border-color: rgba(245, 158, 11, 0.3);
+}
+
+.scenario-btn[data-scenario="boom"]:hover {
+  background: rgba(245, 158, 11, 0.2);
+  border-color: rgba(245, 158, 11, 0.5);
+  box-shadow: 0 4px 12px rgba(245, 158, 11, 0.2);
+}
+
+.scenario-btn[data-scenario="boom"].active {
+  background: rgba(245, 158, 11, 0.3);
+  border-color: #f59e0b;
+}
+
+/* Industrial growth scenario styling */
+.scenario-btn[data-scenario="industrial-growth"] {
+  background: rgba(239, 68, 68, 0.15);
+  border-color: rgba(239, 68, 68, 0.4);
+}
+
+.scenario-btn[data-scenario="industrial-growth"]:hover {
+  background: rgba(239, 68, 68, 0.25);
+  border-color: rgba(239, 68, 68, 0.6);
+  box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
+}
+
+.scenario-btn[data-scenario="industrial-growth"].active {
+  background: rgba(239, 68, 68, 0.4);
+  border-color: #dc2626;
+}
+
+/* Reset button styling */
+.scenario-btn[data-scenario="reset"] {
+  background: rgba(107, 114, 128, 0.1);
+  border-color: rgba(107, 114, 128, 0.3);
+  border-style: dashed;
+}
+
+.scenario-btn[data-scenario="reset"]:hover {
+  background: rgba(107, 114, 128, 0.2);
+  border-color: rgba(107, 114, 128, 0.5);
+  box-shadow: 0 4px 12px rgba(107, 114, 128, 0.2);
+}
+
+.scenario-btn[data-scenario="reset"].active {
+  background: rgba(107, 114, 128, 0.3);
+  border-color: #6b7280;
+  border-style: solid;
+}
+
 /* Safe area handling for devices with notches */
 @supports (padding: max(0px)) {
   @media (max-width: 768px) {
@@ -928,6 +1147,50 @@ input[type="range"]:disabled::-moz-range-thumb {
       margin-bottom: max(10px, env(safe-area-inset-bottom)) !important;
       margin-left: max(16px, env(safe-area-inset-left)) !important;
       margin-right: max(16px, env(safe-area-inset-right)) !important;
+    }
+    
+    /* Financial scenario mobile adjustments */
+    #financial-scenario-container {
+      position: fixed !important;
+      top: auto !important;
+      bottom: 420px !important;
+      left: 50% !important;
+      transform: translateX(-50%) !important;
+      width: calc(100% - 32px) !important;
+      max-width: 380px !important;
+      margin-left: max(16px, env(safe-area-inset-left)) !important;
+      margin-right: max(16px, env(safe-area-inset-right)) !important;
+    }
+    
+    .scenario-buttons {
+      grid-template-columns: 1fr !important;
+      gap: 6px !important;
+    }
+    
+    .scenario-btn {
+      font-size: 12px !important;
+      padding: 12px !important;
+      text-align: left !important;
+    }
+    
+    .scenario-description {
+      font-size: 11px !important;
+    }
+    
+    .scenario-impact {
+      font-size: 11px !important;
+    }
+    
+    /* Impact sections mobile adjustments */
+    .human-impact, .economic-impact, .wildlife-impact {
+      font-size: 10px !important;
+      padding: 6px 10px !important;
+      margin: 4px 0 !important;
+    }
+    
+    .impact-section {
+      margin: 8px 0 !important;
+      padding-top: 8px !important;
     }
   }
 }

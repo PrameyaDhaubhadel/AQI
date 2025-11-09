@@ -22,7 +22,10 @@
       🔄
     </button>
     <button class="toggle-btn active" id="toggle-ai" title="Toggle AI Explanations">
-      🤖
+      🪽
+    </button>
+    <button class="toggle-btn active" id="toggle-financial" title="Toggle Financial Scenarios">
+      💰
     </button>
   </div>
 
@@ -51,13 +54,50 @@
   <!-- AI Explanation Section -->
   <div id="ai-explanation-container" style="display:none;">
     <div class="ai-header">
-      <div class="ai-icon">🤖</div>
+      <div class="ai-icon">�</div>
       <span class="ai-title">Dedalus AI Explains</span>
     </div>
     <div id="ai-explanation-content">
       <div class="loading-dots">
         <span></span><span></span><span></span>
       </div>
+    </div>
+  </div>
+
+  <!-- Financial Scenario Selector -->
+  <div id="financial-scenario-container">
+    <div class="scenario-header">
+      <div class="scenario-icon">💰</div>
+      <span class="scenario-title">Economic Impact Predictor</span>
+    </div>
+    <div class="scenario-description">
+      Select economic conditions to see their impact on AQI predictions:
+    </div>
+    <div class="scenario-buttons">
+      <button class="scenario-btn active" data-scenario="baseline" title="Current economic trends continue">
+        📊 Baseline Economy
+      </button>
+      <button class="scenario-btn" data-scenario="recession" title="Economic downturn reduces industrial activity">
+        📉 Economic Recession
+      </button>
+      <button class="scenario-btn" data-scenario="boom" title="Economic growth increases industrial activity">
+        📈 Economic Boom
+      </button>
+      <button class="scenario-btn" data-scenario="green-investment" title="Massive green technology investments">
+        🌱 Green Investment Wave
+      </button>
+      <button class="scenario-btn" data-scenario="industrial-growth" title="Heavy industrial expansion">
+        🏭 Industrial Expansion
+      </button>
+      <button class="scenario-btn" data-scenario="carbon-tax" title="Heavy carbon taxation policies">
+        💚 Carbon Tax Implementation
+      </button>
+      <button class="scenario-btn reset-btn" data-scenario="reset" title="Reset to current real-world conditions">
+        🔄 Reset to Current
+      </button>
+    </div>
+    <div class="scenario-impact" id="scenario-impact">
+      <strong>Current Scenario:</strong> Baseline Economy - Standard economic growth with current environmental policies.
     </div>
   </div>
 

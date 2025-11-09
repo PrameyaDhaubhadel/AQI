@@ -215,7 +215,7 @@ function createHotspot({ lat, lng }, intensity = 0.5, color = new THREE.Color(1,
 // Make createHotspot globally available
 window.createHotspot = createHotspot;
 
-// Enhanced updateHotspots to show different colors based on AQI levels
+// Enhanced updateHotspots to show different colors based on AQI levels with financial scenario adjustments
 function updateHotspots(hotspots) {
   if (!window.hotspotGroup) {
     console.error('Hotspot group not initialized yet');
@@ -234,19 +234,31 @@ function updateHotspots(hotspots) {
     const position = h.position || { lat: 0, lng: 0 };
     console.log(`Creating hotspot for ${h.name} at coordinates:`, position);
     
-    // Color and size based on 3 AQI categories with darker red shades
     // Convert intensity (0-1) back to AQI (0-500) for proper categorization
-    const aqi = Math.round(h.intensity * 500);
+    let baseAqi = Math.round(h.intensity * 500);
+    
+    // Apply financial scenario adjustment if we're looking at future/past years
+    const currentYear = new Date().getFullYear();
+    const targetYear = selectedYear || currentYear;
+    let adjustedAqi = baseAqi;
+    
+    // Don't apply financial scenarios if we're in reset mode or current year
+    if (targetYear !== currentYear && currentFinancialScenario !== 'reset' && typeof predictAQIForYearWithFinancialScenario === 'function') {
+      const prediction = predictAQIForYearWithFinancialScenario(baseAqi, h.name, targetYear, currentFinancialScenario);
+      adjustedAqi = prediction.aqi;
+    }
+    
+    // Color and size based on adjusted AQI
     let color;
     let sizeMultiplier;
     let aqiCategory;
     
-    if (aqi <= 50) {
+    if (adjustedAqi <= 50) {
       // Good (0-50): Green, small size
       color = new THREE.Color(0.2, 0.8, 0.2);
       sizeMultiplier = 0.3;
       aqiCategory = 'Good';
-    } else if (aqi <= 100) {
+    } else if (adjustedAqi <= 100) {
       // Moderate (51-100): Orange, medium size
       color = new THREE.Color(1.0, 0.6, 0.1);
       sizeMultiplier = 0.6;
@@ -262,20 +274,26 @@ function updateHotspots(hotspots) {
     const hs = createHotspot(position, sizeMultiplier, color);
     
     // Enhanced popup data with detailed information
+    const dataType = targetYear === currentYear || currentFinancialScenario === 'reset' ? 'Current' : 
+                    targetYear > currentYear ? 'Predicted' : 'Historical';
+    const scenarioInfo = (targetYear !== currentYear && currentFinancialScenario !== 'reset') ? 
+                        ` (${financialScenarios[currentFinancialScenario]?.name || 'Baseline'})` : '';
+    
     hs.userData.cityData = {
       name: h.name || 'Unknown City',
-      aqi: aqi,
+      aqi: adjustedAqi,
+      baseAqi: baseAqi,
       category: aqiCategory,
       coordinates: `${position.lat.toFixed(2)}°, ${position.lng.toFixed(2)}°`,
-      info: h.info || `AQI: ${aqi} (${aqiCategory})`
+      info: `${dataType} AQI: ${adjustedAqi} (${aqiCategory})${scenarioInfo}`,
+      year: targetYear,
+      scenario: currentFinancialScenario
     };
-    
-
     
     window.hotspotGroup.add(hs);
   });
   
-  console.log('Added', hotspots.length, 'hotspots to globe');
+  console.log('Added', hotspots.length, 'hotspots to globe with financial scenario:', currentFinancialScenario);
 }
 
 // ---- Basic drag to rotate (keeps your UX) ----
@@ -1208,7 +1226,7 @@ function showAIExplanation(aqi, cityName) {
 }
 
 function generateAQIExplanation(aqi, cityName, year = new Date().getFullYear(), customReasoning = null, isCurrentYear = true) {
-  let level, levelClass, healthEffects, recommendations, description, envCauses;
+  let level, levelClass, healthEffects, recommendations, description, envCauses, humanImpact, economicImpact, wildlifeImpact;
   const currentYear = new Date().getFullYear();
   
   if (aqi <= 50) {
@@ -1218,6 +1236,9 @@ function generateAQIExplanation(aqi, cityName, year = new Date().getFullYear(), 
     healthEffects = "Air quality is acceptable for most people. Enjoy outdoor activities!";
     recommendations = "Perfect time for outdoor exercises, jogging, and recreational activities.";
     envCauses = "Favorable weather conditions, effective emission controls, and natural air circulation are maintaining clean air.";
+    humanImpact = "Minimal health risks. People can engage in all outdoor activities without concern. Children and elderly can play and exercise safely.";
+    economicImpact = "Positive economic conditions with lower healthcare costs, increased tourism, and higher outdoor recreational spending. Agricultural productivity remains optimal.";
+    wildlifeImpact = "Wildlife thrives with clean air supporting healthy ecosystems. Birds migrate normally, pollinators are active, and plant photosynthesis is unimpaired.";
   } else if (aqi <= 100) {
     level = "Moderate";
     levelClass = "aqi-moderate";
@@ -1225,6 +1246,9 @@ function generateAQIExplanation(aqi, cityName, year = new Date().getFullYear(), 
     healthEffects = "Unusually sensitive people may experience minor breathing discomfort.";
     recommendations = "Sensitive individuals should consider reducing prolonged outdoor exertion.";
     envCauses = "Contributing factors may include vehicle emissions, industrial activities, seasonal weather patterns, or dust from construction sites.";
+    humanImpact = "Most people unaffected, but those with asthma or heart conditions may experience mild symptoms. Slight increase in respiratory medications usage.";
+    economicImpact = "Minimal economic impact. Some reduction in outdoor tourism activities. Healthcare costs slightly elevated for sensitive populations.";
+    wildlifeImpact = "Most wildlife unaffected. Some sensitive species may show minor behavioral changes. Slight reduction in pollinator activity during peak pollution hours.";
   } else if (aqi <= 150) {
     level = "Unhealthy for Sensitive Groups";
     levelClass = "aqi-unhealthy";
@@ -1232,6 +1256,9 @@ function generateAQIExplanation(aqi, cityName, year = new Date().getFullYear(), 
     healthEffects = "People with heart/lung disease, older adults, and children may experience symptoms.";
     recommendations = "Sensitive groups should avoid outdoor activities. Others should limit prolonged outdoor exertion.";
     envCauses = "Likely caused by increased traffic congestion, industrial pollution, power plant emissions, wildfires, or unfavorable weather conditions trapping pollutants.";
+    humanImpact = "Children, elderly, and people with respiratory/heart conditions experience coughing, shortness of breath. School outdoor activities may be cancelled.";
+    economicImpact = "Increased healthcare visits and medication sales. Reduced outdoor events and tourism. Agricultural yields may start to decline. Air purifier sales increase.";
+    wildlifeImpact = "Birds may alter migration patterns. Reduced bee and butterfly activity affecting pollination. Some animals seek shelter more frequently.";
   } else if (aqi <= 200) {
     level = "Unhealthy";
     levelClass = "aqi-unhealthy";
@@ -1239,6 +1266,9 @@ function generateAQIExplanation(aqi, cityName, year = new Date().getFullYear(), 
     healthEffects = "Increased likelihood of respiratory symptoms and breathing difficulties for everyone.";
     recommendations = "Everyone should avoid outdoor activities. Stay indoors and use air purifiers if available.";
     envCauses = "Major contributors include heavy industrial emissions, fossil fuel burning, vehicle exhaust, agricultural burning, or severe weather inversions preventing pollutant dispersion.";
+    humanImpact = "General population experiences coughing, throat irritation, and fatigue. Emergency room visits increase. Vulnerable populations at serious risk.";
+    economicImpact = "Significant healthcare costs rise. Outdoor businesses suffer losses. Agricultural productivity drops. Increased absenteeism from work and school.";
+    wildlifeImpact = "Visible stress on wildlife. Birds avoid the area or fly at higher altitudes. Aquatic life affected by acid rain. Plant growth significantly reduced.";
   } else {
     level = "Very Unhealthy to Hazardous";
     levelClass = "aqi-unhealthy";
@@ -1246,6 +1276,9 @@ function generateAQIExplanation(aqi, cityName, year = new Date().getFullYear(), 
     healthEffects = "Serious risk of respiratory effects and premature mortality for all populations.";
     recommendations = "Everyone should avoid all outdoor activities. Emergency conditions - stay indoors with windows closed.";
     envCauses = "Critical pollution sources: massive industrial emissions, large-scale fires, extreme weather events, coal burning, uncontrolled vehicle emissions, or atmospheric conditions creating pollution domes.";
+    humanImpact = "Health emergency affecting entire population. Hospitals overwhelmed with respiratory cases. Increased mortality rates, especially among vulnerable groups.";
+    economicImpact = "Economic crisis with massive healthcare costs, business shutdowns, and agricultural collapse. Tourism industry devastated. Long-term economic recovery needed.";
+    wildlifeImpact = "Ecological disaster with mass wildlife mortality. Birds cannot fly safely. Fish kills in water bodies. Forests and crops severely damaged or dying.";
   }
   
   // Year-based content
@@ -1303,6 +1336,23 @@ function generateAQIExplanation(aqi, cityName, year = new Date().getFullYear(), 
       ${recommendations}
     </div>
     
+    <div class="impact-section">
+      <div class="human-impact">
+        <strong>👥 Human Impact:</strong><br>
+        ${humanImpact}
+      </div>
+      
+      <div class="economic-impact">
+        <strong>💼 Economic Impact:</strong><br>
+        ${economicImpact}
+      </div>
+      
+      <div class="wildlife-impact">
+        <strong>🦋 Wildlife Impact:</strong><br>
+        ${wildlifeImpact}
+      </div>
+    </div>
+    
     <div style="margin-top: 12px; font-size: 11px; color: #64748b; text-align: center;">
       Generated by Dedalus AI • ${year === currentYear ? 'Based on WHO guidelines' : `${year > currentYear ? 'Predictive' : 'Historical'} analysis`}
     </div>
@@ -1349,13 +1399,15 @@ function setupMobileToggles() {
     'toggle-search': document.getElementById('search-bar-container'),
     'toggle-year': null, // Will be set when year slider is created
     'toggle-rotation': null, // Will be set when rotation controls are created
-    'toggle-ai': document.getElementById('ai-explanation-container')
+    'toggle-ai': document.getElementById('ai-explanation-container'),
+    'toggle-financial': document.getElementById('financial-scenario-container')
   };
 
   console.log('Initial toggles found:', {
     info: !!toggles['toggle-info'],
     search: !!toggles['toggle-search'],
-    ai: !!toggles['toggle-ai']
+    ai: !!toggles['toggle-ai'],
+    financial: !!toggles['toggle-financial']
   });
 
   // Find dynamically created elements
@@ -1529,6 +1581,250 @@ function updateTooltipForMobile() {
   window.addEventListener('mousemove', improvedMouseMove);
 }
 
+// Financial Scenario System
+let currentFinancialScenario = 'baseline';
+const financialScenarios = {
+  'baseline': {
+    name: 'Baseline Economy',
+    description: 'Standard economic growth with current environmental policies.',
+    aqiMultiplier: 1.0,
+    trendAdjustment: 0,
+    details: 'Current economic trends continue with moderate growth and existing environmental regulations.',
+    icon: '📊',
+    color: '#22c55e'
+  },
+  'recession': {
+    name: 'Economic Recession',
+    description: 'Economic downturn reduces industrial activity and emissions.',
+    aqiMultiplier: 0.75,
+    trendAdjustment: -1.5,
+    details: 'Reduced industrial production and transportation leads to lower emissions. However, environmental investments may also decrease.',
+    icon: '📉',
+    color: '#ef4444'
+  },
+  'boom': {
+    name: 'Economic Boom',
+    description: 'Rapid economic growth increases industrial activity.',
+    aqiMultiplier: 1.3,
+    trendAdjustment: 1.2,
+    details: 'Increased manufacturing, transportation, and energy consumption lead to higher emissions.',
+    icon: '📈',
+    color: '#f59e0b'
+  },
+  'green-investment': {
+    name: 'Green Investment Wave',
+    description: 'Massive investments in clean technology and renewable energy.',
+    aqiMultiplier: 0.6,
+    trendAdjustment: -2.5,
+    details: 'Large-scale adoption of renewable energy, electric vehicles, and clean manufacturing technologies.',
+    icon: '🌱',
+    color: '#10b981'
+  },
+  'industrial-growth': {
+    name: 'Industrial Expansion',
+    description: 'Heavy industrial expansion with traditional technologies.',
+    aqiMultiplier: 1.6,
+    trendAdjustment: 2.0,
+    details: 'Rapid industrialization using conventional technologies increases pollution levels significantly.',
+    icon: '🏭',
+    color: '#dc2626'
+  },
+  'carbon-tax': {
+    name: 'Carbon Tax Implementation',
+    description: 'Heavy carbon taxation drives clean technology adoption.',
+    aqiMultiplier: 0.7,
+    trendAdjustment: -2.0,
+    details: 'Carbon pricing makes clean technologies more competitive, accelerating the transition to low-emission alternatives.',
+    icon: '💚',
+    color: '#059669'
+  },
+  'reset': {
+    name: 'Current Real-World Conditions',
+    description: 'Reset to actual current conditions without economic predictions.',
+    aqiMultiplier: 1.0,
+    trendAdjustment: 0,
+    details: 'Live data from monitoring stations showing actual current air quality conditions.',
+    icon: '🔄',
+    color: '#6b7280'
+  }
+};
+
+function setupFinancialScenarios() {
+  console.log('Setting up financial scenarios...');
+  
+  const scenarioButtons = document.querySelectorAll('.scenario-btn');
+  const impactDiv = document.getElementById('scenario-impact');
+  
+  if (!scenarioButtons.length || !impactDiv) {
+    console.error('Financial scenario elements not found');
+    return;
+  }
+  
+  scenarioButtons.forEach(button => {
+    button.addEventListener('click', () => {
+      const scenario = button.dataset.scenario;
+      if (!scenario || !financialScenarios[scenario]) return;
+      
+      // Update active state
+      scenarioButtons.forEach(btn => btn.classList.remove('active'));
+      button.classList.add('active');
+      
+      // Update current scenario
+      currentFinancialScenario = scenario;
+      const scenarioData = financialScenarios[scenario];
+      
+      // Special handling for reset scenario
+      if (scenario === 'reset') {
+        // Reset to baseline conditions
+        currentFinancialScenario = 'baseline';
+        
+        // Update impact description for reset
+        impactDiv.innerHTML = `
+          <strong>🔄 Reset Applied:</strong> Returning to current real-world conditions without economic predictions.
+          <br><br>
+          <em>All financial scenario effects have been cleared. Displaying actual current air quality data from monitoring stations.</em>
+        `;
+        
+        // Force update to current year to show real data
+        const currentYear = new Date().getFullYear();
+        if (selectedYear !== currentYear) {
+          selectedYear = currentYear;
+          // Update year slider if it exists
+          const yearSlider = document.querySelector('input[type="range"][min="2023"]');
+          if (yearSlider) {
+            yearSlider.value = currentYear;
+            const yearDisplay = yearSlider.parentNode.querySelector('span:last-child');
+            if (yearDisplay) yearDisplay.textContent = currentYear;
+          }
+        }
+      } else {
+        // Normal scenario update
+        impactDiv.innerHTML = `
+          <strong>Current Scenario:</strong> ${scenarioData.name} - ${scenarioData.description}
+          <br><br>
+          <em>${scenarioData.details}</em>
+        `;
+      }
+      
+      console.log('Financial scenario changed to:', scenario);
+      
+      // Update predictions if there's a selected city
+      if (window.currentSelectedCity) {
+        updateAIExplanationForYear(
+          window.currentSelectedCity.name, 
+          window.currentSelectedCity.baseAqi, 
+          selectedYear || new Date().getFullYear()
+        );
+      }
+      
+      // Update all hotspots with new scenario
+      updateDataForYear(selectedYear || new Date().getFullYear());
+    });
+  });
+  
+  console.log('Financial scenarios initialized');
+}
+
+// Enhanced AQI prediction with financial scenarios
+function predictAQIForYearWithFinancialScenario(baseAqi, cityName, targetYear, scenario = 'baseline') {
+  const currentYear = new Date().getFullYear();
+  const yearDiff = targetYear - currentYear;
+  
+  // Get base prediction
+  const basePrediction = predictAQIForYear(baseAqi, cityName, targetYear);
+  
+  // Apply financial scenario
+  const scenarioData = financialScenarios[scenario] || financialScenarios.baseline;
+  let adjustedAqi = basePrediction.aqi * scenarioData.aqiMultiplier;
+  
+  // Add scenario-specific trend adjustment
+  if (yearDiff !== 0) {
+    adjustedAqi += (yearDiff * scenarioData.trendAdjustment);
+  }
+  
+  // Ensure realistic bounds
+  adjustedAqi = Math.max(5, Math.min(500, Math.round(adjustedAqi)));
+  
+  return {
+    ...basePrediction,
+    aqi: adjustedAqi,
+    scenario: scenario,
+    scenarioData: scenarioData,
+    originalAqi: basePrediction.aqi
+  };
+}
+
+// Enhanced reasoning generation with financial scenario context
+function generateYearReasoningWithFinancialScenario(predictedData, cityName, targetYear) {
+  const { yearDiff, isCurrentYear, scenario, scenarioData, originalAqi, aqi } = predictedData;
+  
+  if (isCurrentYear) {
+    return "Current year data based on live measurements and real-time monitoring stations.";
+  }
+  
+  let reasoning = `**${targetYear} Prediction Analysis (${scenarioData.name}):**\n\n`;
+  
+  // Financial scenario impact
+  const aqiChange = aqi - originalAqi;
+  const changeDirection = aqiChange > 0 ? 'increase' : 'decrease';
+  const changeAmount = Math.abs(aqiChange);
+  
+  reasoning += `• **Economic Impact**: ${scenarioData.details}\n`;
+  reasoning += `• **AQI Adjustment**: ${changeDirection} of ~${changeAmount.toFixed(0)} points due to economic conditions\n`;
+  
+  if (yearDiff > 0) { // Future prediction
+    if (scenario === 'recession') {
+      reasoning += `• **Industrial Activity**: Reduced manufacturing and transportation lower emissions\n`;
+      reasoning += `• **Energy Demand**: Decreased energy consumption reduces power plant emissions\n`;
+      reasoning += `• **Policy Risk**: Environmental regulations may weaken during economic stress\n`;
+    } else if (scenario === 'boom') {
+      reasoning += `• **Industrial Surge**: Increased production and construction raise emissions\n`;
+      reasoning += `• **Transportation**: Higher freight and commuter traffic increase vehicle emissions\n`;
+      reasoning += `• **Energy Demand**: Greater electricity needs may increase fossil fuel usage\n`;
+    } else if (scenario === 'green-investment') {
+      reasoning += `• **Clean Technology**: Rapid deployment of renewable energy and electric vehicles\n`;
+      reasoning += `• **Infrastructure**: Smart grids and efficient buildings reduce overall emissions\n`;
+      reasoning += `• **Innovation**: Breakthrough technologies accelerate decarbonization\n`;
+    } else if (scenario === 'industrial-growth') {
+      reasoning += `• **Heavy Industry**: Steel, cement, and chemical production increase dramatically\n`;
+      reasoning += `• **Energy**: Coal and gas power plants expand to meet growing demand\n`;
+      reasoning += `• **Urban Expansion**: Rapid city growth increases transportation emissions\n`;
+    } else if (scenario === 'carbon-tax') {
+      reasoning += `• **Market Forces**: Carbon pricing makes clean alternatives competitive\n`;
+      reasoning += `• **Corporate Response**: Companies invest heavily in emission reductions\n`;
+      reasoning += `• **Behavioral Change**: Higher fossil fuel costs modify consumption patterns\n`;
+    } else {
+      reasoning += `• **Steady Progress**: Gradual improvements in technology and efficiency\n`;
+      reasoning += `• **Policy Continuity**: Existing environmental regulations remain stable\n`;
+      reasoning += `• **Market Evolution**: Natural transition toward cleaner alternatives\n`;
+    }
+  }
+  
+  return reasoning;
+}
+
+// Update the existing prediction functions to use financial scenarios
+function updateAIExplanationForYear(cityName, baseAqi, targetYear) {
+  const aiContainer = document.getElementById('ai-explanation-container');
+  const aiContent = document.getElementById('ai-explanation-content');
+  
+  if (!aiContainer || !aiContent) return;
+  
+  // Show loading
+  aiContent.innerHTML = `
+    <div class="loading-dots">
+      <span></span><span></span><span></span>
+    </div>
+  `;
+  
+  setTimeout(() => {
+    const prediction = predictAQIForYearWithFinancialScenario(baseAqi, cityName, targetYear, currentFinancialScenario);
+    const reasoning = generateYearReasoningWithFinancialScenario(prediction, cityName, targetYear);
+    const explanation = generateAQIExplanation(prediction.aqi, cityName, targetYear, reasoning, prediction.isCurrentYear);
+    aiContent.innerHTML = explanation;
+  }, 800);
+}
+
 // Initialize mobile features
 window.addEventListener('DOMContentLoaded', () => {
   console.log('DOM loaded, initializing mobile features...');
@@ -1541,6 +1837,7 @@ window.addEventListener('DOMContentLoaded', () => {
     setupMobileToggles();
     setupMobileTouch();
     updateTooltipForMobile();
+    setupFinancialScenarios();
     
     // Force a resize to ensure everything is properly sized
     handleResize();
@@ -1549,7 +1846,8 @@ window.addEventListener('DOMContentLoaded', () => {
   // Also set up after a longer delay to catch dynamically created elements
   setTimeout(() => {
     setupMobileToggles();
-    console.log('Mobile toggles re-initialized');
+    setupFinancialScenarios();
+    console.log('Mobile toggles and financial scenarios re-initialized');
   }, 3000);
 });
 

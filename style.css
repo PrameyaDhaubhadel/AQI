@@ -9,9 +9,14 @@ body {
   font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
 }
 canvas {
-  width: 100vw;
-  height: 100vh;
+  width: 100vw !important;
+  height: 100vh !important;
+  height: 100dvh !important; /* Dynamic viewport height for mobile */
   display: block;
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 1;
 }
 #info {
   position: absolute;
@@ -521,4 +526,408 @@ input[type="range"]:disabled::-webkit-slider-thumb {
 
 input[type="range"]:disabled::-moz-range-thumb {
     cursor: not-allowed;
+}
+
+/* Mobile Toggle Controls */
+#mobile-toggles {
+  position: fixed;
+  top: 10px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 1001;
+  display: none;
+  background: rgba(0,0,0,0.85);
+  padding: 8px 12px;
+  border-radius: 25px;
+  gap: 8px;
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255,255,255,0.1);
+}
+
+.toggle-btn {
+  background: rgba(255,255,255,0.2);
+  border: 1px solid rgba(255,255,255,0.3);
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  color: white;
+  font-size: 16px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s ease;
+}
+
+.toggle-btn:hover {
+  background: rgba(255,255,255,0.3);
+  transform: scale(1.1);
+}
+
+.toggle-btn.active {
+  background: #3a8ef6;
+  border-color: #3a8ef6;
+}
+
+.toggle-btn.hidden {
+  background: rgba(255,0,0,0.6);
+  border-color: rgba(255,0,0,0.8);
+}
+
+/* Mobile Responsive Styles */
+@media (max-width: 768px) {
+  /* Show mobile toggles */
+  #mobile-toggles {
+    display: flex;
+  }
+
+  /* Info panel adjustments */
+  #info {
+    position: fixed;
+    top: 70px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: calc(100% - 32px);
+    max-width: 400px;
+    font-size: 12px;
+    padding: 10px 12px;
+  }
+
+  .title-container {
+    flex-direction: column;
+    text-align: center;
+    gap: 8px;
+  }
+
+  .title-container h1 {
+    font-size: 18px;
+  }
+
+  .logo-image {
+    width: 40px;
+    height: 40px;
+  }
+
+  #legend {
+    flex-direction: column;
+    gap: 6px;
+    font-size: 11px;
+  }
+
+  /* Search bar mobile layout */
+  #search-bar-container {
+    position: fixed;
+    top: auto;
+    bottom: 120px;
+    right: 50%;
+    transform: translateX(50%);
+    left: auto;
+    width: calc(100% - 32px);
+    max-width: 350px;
+    flex-direction: column;
+    gap: 8px;
+    padding: 12px;
+  }
+
+  #city-search-input {
+    width: 100%;
+    font-size: 16px; /* Prevent zoom on iOS */
+    padding: 12px 10px;
+  }
+
+  #city-search-btn {
+    width: 100%;
+    padding: 12px 14px;
+    font-size: 16px;
+  }
+
+  #search-result-info {
+    margin-left: 0;
+    max-width: none;
+    width: 100%;
+    text-align: center;
+  }
+
+  /* AI Explanation adjustments */
+  #ai-explanation-container {
+    position: fixed;
+    top: auto;
+    bottom: 280px;
+    right: 50%;
+    transform: translateX(50%);
+    left: auto;
+    width: calc(100% - 32px);
+    max-width: 400px;
+    max-height: 250px;
+    overflow-y: auto;
+    font-size: 12px;
+  }
+
+  .city-header {
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+  }
+
+  .city-image-container {
+    width: 60px;
+    height: 45px;
+  }
+
+  /* Year slider mobile layout */
+  .year-slider-container {
+    position: fixed !important;
+    bottom: 60px !important;
+    left: 50% !important;
+    transform: translateX(-50%) !important;
+    width: calc(100% - 32px) !important;
+    max-width: 350px !important;
+    flex-direction: column !important;
+    gap: 8px !important;
+    padding: 12px !important;
+    font-size: 14px !important;
+  }
+
+  .year-slider-container input[type="range"] {
+    width: 100% !important;
+    margin: 8px 0 !important;
+  }
+
+  /* Rotation controls mobile layout */
+  .rotation-controls {
+    position: fixed !important;
+    bottom: 10px !important;
+    right: 50% !important;
+    transform: translateX(50%) !important;
+    left: auto !important;
+    width: calc(100% - 32px) !important;
+    max-width: 350px !important;
+    flex-direction: column !important;
+    gap: 8px !important;
+    padding: 10px 12px !important;
+    font-size: 12px !important;
+  }
+
+  .rotation-controls .row {
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .rotation-controls input[type="range"] {
+    width: 100% !important;
+  }
+
+  .rotation-controls button {
+    padding: 8px 12px;
+    font-size: 12px;
+  }
+
+  /* Tooltip adjustments */
+  #tooltip {
+    max-width: calc(100vw - 40px) !important;
+    font-size: 12px !important;
+  }
+
+  .tooltip-content {
+    padding: 8px !important;
+  }
+
+  .tooltip-title {
+    font-size: 14px !important;
+  }
+
+  /* Hidden elements on mobile */
+  .mobile-hidden {
+    display: none !important;
+  }
+
+  /* Canvas touch improvements */
+  canvas {
+    touch-action: none;
+  }
+}
+
+@media (max-width: 480px) {
+  /* Extra small screens */
+  #info {
+    font-size: 11px;
+    padding: 8px 10px;
+  }
+
+  .title-container h1 {
+    font-size: 16px;
+  }
+
+  #legend {
+    font-size: 10px;
+  }
+
+  #mobile-toggles {
+    gap: 6px;
+  }
+
+  .toggle-btn {
+    width: 35px;
+    height: 35px;
+    font-size: 14px;
+  }
+
+  #ai-explanation-container {
+    max-height: 200px;
+    font-size: 11px;
+  }
+
+  #search-bar-container {
+    bottom: 110px;
+  }
+}
+
+/* Landscape mode adjustments */
+@media (max-width: 768px) and (orientation: landscape) {
+  #info {
+    top: 10px;
+    left: 10px;
+    transform: none;
+    width: 280px;
+    max-width: none;
+  }
+
+  #search-bar-container {
+    top: 10px;
+    bottom: auto;
+    right: 10px;
+    transform: none;
+    width: 250px;
+    max-width: none;
+  }
+
+  #ai-explanation-container {
+    top: 80px;
+    bottom: auto;
+    right: 10px;
+    transform: none;
+    width: 280px;
+    max-width: none;
+    max-height: 180px;
+  }
+
+  .year-slider-container {
+    bottom: 10px !important;
+    left: 50% !important;
+    transform: translateX(-50%) !important;
+    flex-direction: row !important;
+    width: auto !important;
+    max-width: none !important;
+  }
+
+  .rotation-controls {
+    bottom: 10px !important;
+    right: 10px !important;
+    transform: none !important;
+    width: 200px !important;
+    max-width: none !important;
+  }
+
+  #mobile-toggles {
+    top: 50%;
+    left: 5px;
+    transform: translateY(-50%);
+    flex-direction: column;
+  }
+}
+
+/* Animation for smooth transitions */
+.mobile-hidden {
+  opacity: 0 !important;
+  pointer-events: none !important;
+  transform: scale(0.8) !important;
+  transition: all 0.3s ease !important;
+}
+
+#info, #search-bar-container, #ai-explanation-container,
+.year-slider-container, .rotation-controls {
+  transition: all 0.3s ease;
+}
+
+/* Improved mobile scrolling */
+@media (max-width: 768px) {
+  #ai-explanation-container {
+    -webkit-overflow-scrolling: touch;
+  }
+  
+  /* Better button spacing on mobile */
+  .rotation-controls button {
+    min-height: 44px; /* iOS touch target minimum */
+  }
+  
+  #city-search-btn {
+    min-height: 44px;
+  }
+  
+  /* Improved input styling for mobile */
+  #city-search-input:focus {
+    outline: 2px solid #3a8ef6;
+    outline-offset: 2px;
+  }
+}
+
+/* High DPI/Retina display optimizations */
+@media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
+  .logo-image {
+    image-rendering: -webkit-optimize-contrast;
+    image-rendering: crisp-edges;
+  }
+}
+
+/* Dark mode improvements for mobile */
+@media (prefers-color-scheme: dark) {
+  .toggle-btn {
+    background: rgba(255,255,255,0.15);
+    border-color: rgba(255,255,255,0.25);
+  }
+  
+  .toggle-btn:hover {
+    background: rgba(255,255,255,0.25);
+  }
+}
+
+/* Accessibility improvements */
+@media (prefers-reduced-motion: reduce) {
+  .mobile-hidden,
+  #info, #search-bar-container, #ai-explanation-container,
+  .year-slider-container, .rotation-controls,
+  .toggle-btn {
+    transition: none !important;
+    animation: none !important;
+  }
+}
+
+/* Focus indicators for keyboard navigation */
+.toggle-btn:focus {
+  outline: 2px solid #3a8ef6;
+  outline-offset: 2px;
+}
+
+/* Safe area handling for devices with notches */
+@supports (padding: max(0px)) {
+  @media (max-width: 768px) {
+    #mobile-toggles {
+      top: max(10px, env(safe-area-inset-top));
+      padding-left: max(8px, env(safe-area-inset-left));
+      padding-right: max(8px, env(safe-area-inset-right));
+    }
+    
+    #info {
+      top: max(70px, calc(env(safe-area-inset-top) + 60px));
+      margin-left: max(16px, env(safe-area-inset-left));
+      margin-right: max(16px, env(safe-area-inset-right));
+    }
+    
+    .year-slider-container,
+    .rotation-controls {
+      margin-bottom: max(10px, env(safe-area-inset-bottom)) !important;
+      margin-left: max(16px, env(safe-area-inset-left)) !important;
+      margin-right: max(16px, env(safe-area-inset-right)) !important;
+    }
+  }
 }

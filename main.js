@@ -16,12 +16,30 @@ window.addEventListener('DOMContentLoaded', () => {
 
 function initScene() {
 // ---- Renderer & Scene ----
-const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false });
-renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
-renderer.setSize(window.innerWidth, window.innerHeight);
-renderer.outputColorSpace = THREE.SRGBColorSpace;      // correct color management
+const renderer = new THREE.WebGLRenderer({ 
+  antialias: true, 
+  alpha: false,
+  powerPreference: "high-performance", // Better for mobile
+  stencil: false // Disable stencil buffer for better mobile performance
+});
+
+// Set initial size and pixel ratio
+const initialWidth = window.innerWidth;
+const initialHeight = window.innerHeight;
+const pixelRatio = Math.min(window.devicePixelRatio || 1, 2);
+
+renderer.setPixelRatio(pixelRatio);
+renderer.setSize(initialWidth, initialHeight);
+renderer.outputColorSpace = THREE.SRGBColorSpace;
 renderer.toneMapping = THREE.ACESFilmicToneMapping;
 renderer.toneMappingExposure = 1.0;
+
+// Mobile-specific optimizations
+if (initialWidth <= 768) {
+  renderer.setPixelRatio(Math.min(pixelRatio, 1.5)); // Lower pixel ratio for mobile
+}
+
+console.log(`Renderer initialized: ${initialWidth}x${initialHeight}, PixelRatio: ${renderer.getPixelRatio()}`);
 document.body.appendChild(renderer.domElement);
 
 const scene = new THREE.Scene();
@@ -629,13 +647,35 @@ function animate() {
 animate();
 
 // ---- Window resize ----
-window.addEventListener('resize', () => {
+function handleResize() {
   const w = window.innerWidth;
   const h = window.innerHeight;
+  
+  // Update renderer size
   renderer.setSize(w, h, false);
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+  
+  // Update camera
   camera.aspect = w / h;
   camera.updateProjectionMatrix();
+  
+  // Adjust camera position for mobile
+  if (w <= 768) {
+    camera.position.set(0, 0, 16); // Move camera back a bit for mobile
+  } else {
+    camera.position.set(0, 0, 14);
+  }
+  
+  console.log(`Resized to: ${w}x${h}, Mobile: ${w <= 768}`);
+}
+
+window.addEventListener('resize', handleResize);
+window.addEventListener('orientationchange', () => {
+  setTimeout(handleResize, 100); // Small delay for orientation change
 });
+
+// Initial resize
+handleResize();
 
 // ---- Example hook to plug your model in (kept minimal) ----
 // If you keep carbonModel.js, you can continue to call it here.
@@ -654,6 +694,35 @@ async function updateData() {
 // Refresh every 5 minutes
 setInterval(updateData, 5 * 60 * 1000);
 updateData();
+
+// Debug mobile responsiveness
+function debugMobileSetup() {
+  console.log('=== MOBILE DEBUG INFO ===');
+  console.log('Screen width:', window.innerWidth);
+  console.log('Screen height:', window.innerHeight);
+  console.log('Device pixel ratio:', window.devicePixelRatio);
+  console.log('Is mobile (<=768px):', window.innerWidth <= 768);
+  console.log('Viewport meta tag:', document.querySelector('meta[name="viewport"]')?.content);
+  
+  const mobileToggles = document.getElementById('mobile-toggles');
+  console.log('Mobile toggles element:', !!mobileToggles);
+  if (mobileToggles) {
+    const computed = window.getComputedStyle(mobileToggles);
+    console.log('Mobile toggles display:', computed.display);
+    console.log('Mobile toggles visibility:', computed.visibility);
+  }
+  
+  const canvas = document.querySelector('canvas');
+  if (canvas) {
+    console.log('Canvas size:', canvas.width, 'x', canvas.height);
+    console.log('Canvas style size:', canvas.style.width, 'x', canvas.style.height);
+  }
+  
+  console.log('========================');
+}
+
+// Call debug function
+setTimeout(debugMobileSetup, 2000);
 
 } // Close initScene function
 
@@ -1269,4 +1338,234 @@ window.addEventListener('DOMContentLoaded', () => {
   
   // Small delay to ensure createHotspot is available
   setTimeout(waitForGlobe, 500);
+});
+
+// Mobile responsive functionality
+function setupMobileToggles() {
+  console.log('Setting up mobile toggles...');
+  
+  const toggles = {
+    'toggle-info': document.getElementById('info'),
+    'toggle-search': document.getElementById('search-bar-container'),
+    'toggle-year': null, // Will be set when year slider is created
+    'toggle-rotation': null, // Will be set when rotation controls are created
+    'toggle-ai': document.getElementById('ai-explanation-container')
+  };
+
+  console.log('Initial toggles found:', {
+    info: !!toggles['toggle-info'],
+    search: !!toggles['toggle-search'],
+    ai: !!toggles['toggle-ai']
+  });
+
+  // Find dynamically created elements
+  function findDynamicElements() {
+    console.log('Looking for dynamic elements...');
+    
+    // Find year slider container - look for div with year slider
+    const allDivs = document.querySelectorAll('div');
+    for (let div of allDivs) {
+      if (div.textContent && div.textContent.includes('Year:') && div.querySelector('input[type="range"]')) {
+        toggles['toggle-year'] = div;
+        div.classList.add('year-slider-container');
+        console.log('Found year slider container');
+        break;
+      }
+    }
+
+    // Find rotation controls container - look for Earth Rotation Speed
+    for (let div of allDivs) {
+      if (div.textContent && div.textContent.includes('Earth Rotation Speed')) {
+        toggles['toggle-rotation'] = div;
+        div.classList.add('rotation-controls');
+        console.log('Found rotation controls container');
+        break;
+      }
+    }
+    
+    console.log('Dynamic elements found:', {
+      year: !!toggles['toggle-year'],
+      rotation: !!toggles['toggle-rotation']
+    });
+  }
+
+  // Set up toggle functionality
+  Object.keys(toggles).forEach(toggleId => {
+    const toggleBtn = document.getElementById(toggleId);
+    if (!toggleBtn) return;
+
+    toggleBtn.addEventListener('click', () => {
+      // Find dynamic elements if not found yet
+      if (!toggles[toggleId] && (toggleId === 'toggle-year' || toggleId === 'toggle-rotation')) {
+        findDynamicElements();
+      }
+
+      const targetElement = toggles[toggleId];
+      if (!targetElement) return;
+
+      const isVisible = !targetElement.classList.contains('mobile-hidden');
+      
+      if (isVisible) {
+        targetElement.classList.add('mobile-hidden');
+        toggleBtn.classList.remove('active');
+        toggleBtn.classList.add('hidden');
+      } else {
+        targetElement.classList.remove('mobile-hidden');
+        toggleBtn.classList.add('active');
+        toggleBtn.classList.remove('hidden');
+      }
+    });
+  });
+
+  // Initial setup after a delay to allow dynamic elements to be created
+  setTimeout(findDynamicElements, 2000);
+}
+
+// Touch handling for mobile
+function setupMobileTouch() {
+  const canvas = document.querySelector('canvas');
+  if (!canvas) return;
+
+  let touchStarted = false;
+  let lastTouchX = 0;
+  let lastTouchY = 0;
+
+  canvas.addEventListener('touchstart', (e) => {
+    e.preventDefault();
+    touchStarted = true;
+    const touch = e.touches[0];
+    lastTouchX = touch.clientX;
+    lastTouchY = touch.clientY;
+    
+    // Trigger mouse down for rotation
+    onDown({ clientX: touch.clientX, clientY: touch.clientY });
+  }, { passive: false });
+
+  canvas.addEventListener('touchmove', (e) => {
+    e.preventDefault();
+    if (!touchStarted) return;
+    
+    const touch = e.touches[0];
+    
+    // Trigger mouse move for rotation
+    onMove({ clientX: touch.clientX, clientY: touch.clientY });
+    
+    lastTouchX = touch.clientX;
+    lastTouchY = touch.clientY;
+  }, { passive: false });
+
+  canvas.addEventListener('touchend', (e) => {
+    e.preventDefault();
+    touchStarted = false;
+    onUp();
+  }, { passive: false });
+
+  // Prevent zoom on double tap
+  canvas.addEventListener('touchend', (e) => {
+    e.preventDefault();
+  }, { passive: false });
+}
+
+// Auto-hide UI elements on small screens
+function setupAutoHideForSmallScreens() {
+  function checkScreenSize() {
+    const isMobile = window.innerWidth <= 768;
+    const isSmallMobile = window.innerWidth <= 480;
+    
+    if (isSmallMobile) {
+      // On very small screens, hide AI explanation by default
+      const aiContainer = document.getElementById('ai-explanation-container');
+      const aiToggle = document.getElementById('toggle-ai');
+      if (aiContainer && aiToggle) {
+        aiContainer.classList.add('mobile-hidden');
+        aiToggle.classList.remove('active');
+        aiToggle.classList.add('hidden');
+      }
+    }
+  }
+
+  checkScreenSize();
+  window.addEventListener('resize', checkScreenSize);
+}
+
+// Improved tooltip positioning for mobile
+function updateTooltipForMobile() {
+  const tooltip = document.getElementById('tooltip');
+  if (!tooltip) return;
+
+  const originalMouseMove = onMouseMove;
+  
+  // Override mouse move for better mobile tooltip positioning
+  const originalOnMouseMove = onMouseMove;
+  function improvedMouseMove(event) {
+    originalOnMouseMove(event);
+    
+    if (window.innerWidth <= 768 && tooltip.style.display === 'block') {
+      const rect = document.body.getBoundingClientRect();
+      const tooltipRect = tooltip.getBoundingClientRect();
+      
+      let left = event.clientX + 15;
+      let top = event.clientY - 10;
+      
+      // Keep tooltip within viewport
+      if (left + tooltipRect.width > window.innerWidth - 20) {
+        left = event.clientX - tooltipRect.width - 15;
+      }
+      
+      if (top + tooltipRect.height > window.innerHeight - 20) {
+        top = event.clientY - tooltipRect.height - 15;
+      }
+      
+      if (left < 20) left = 20;
+      if (top < 70) top = 70; // Account for mobile toggles
+      
+      tooltip.style.left = left + 'px';
+      tooltip.style.top = top + 'px';
+    }
+  }
+  
+  // Replace the event listener
+  window.removeEventListener('mousemove', originalOnMouseMove);
+  window.addEventListener('mousemove', improvedMouseMove);
+}
+
+// Initialize mobile features
+window.addEventListener('DOMContentLoaded', () => {
+  console.log('DOM loaded, initializing mobile features...');
+  console.log('Screen width:', window.innerWidth, 'Mobile:', window.innerWidth <= 768);
+  
+  // Initial check
+  setupAutoHideForSmallScreens();
+  
+  setTimeout(() => {
+    setupMobileToggles();
+    setupMobileTouch();
+    updateTooltipForMobile();
+    
+    // Force a resize to ensure everything is properly sized
+    handleResize();
+  }, 1000);
+  
+  // Also set up after a longer delay to catch dynamically created elements
+  setTimeout(() => {
+    setupMobileToggles();
+    console.log('Mobile toggles re-initialized');
+  }, 3000);
+});
+
+// Handle orientation changes
+window.addEventListener('orientationchange', () => {
+  setTimeout(() => {
+    setupAutoHideForSmallScreens();
+  }, 500);
+});
+
+// Prevent zoom on input focus (iOS)
+document.addEventListener('touchstart', function() {
+  const inputs = document.querySelectorAll('input');
+  inputs.forEach(input => {
+    if (input.style.fontSize !== '16px') {
+      input.style.fontSize = '16px';
+    }
+  });
 });
